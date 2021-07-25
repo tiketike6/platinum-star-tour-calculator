@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="viewport" content="width=device-width" />
+        <link href="stylesheet.css" rel="stylesheet" />
+        <title>プラチナスターツアー計算機</title>
+    </head>
+
+    <body>
+        <table>
+            <tr>
+                <td class="nowrap">開催日時</td>
+                <td>:</td>
+                <td><input type="datetime-local" id="datetimeStart" /> ～ <input type="datetime-local" id="datetimeEnd" /></td>
+            </tr>
+            <tr>
+                <td class="nowrap">最終目標pt</td>
+                <td>:</td>
+                <td><input type="number" id="targetEnd" style="width: 6em" /> pt <span id="diffEnd"> </span></td>
+            </tr>
+            <tr>
+                <td class="nowrap" id="labelToday">今日の目標pt</td>
+                <td>:</td>
+                <td id="targetToday"></td>
+            </tr>
+            <tr>
+                <td class="nowrap" id="labelNow">現在の目標pt</td>
+                <td>:</td>
+                <td id="targetNow"></td>
+            </tr>
+            <tr>
+                <td class="nowrap">元気</td>
+                <td>:</td>
+                <td><input type="number" id="vitality" style="width: 4em" /></td>
+            </tr>
+            <tr>
+                <td class="nowrap">累積イベントpt</td>
+                <td>:</td>
+                <td><input type="number" id="ownPoints" style="width: 6em" /> pt</td>
+            </tr>
+            <tr>
+                <td class="nowrap">アイテム所持数</td>
+                <td>:</td>
+                <td><input type="number" id="ownItems" style="width: 3em" /> 個</td>
+            </tr>
+            <tr>
+                <td class="nowrap">進捗度</td>
+                <td>:</td>
+                <td><input type="number" id="progress" style="width: 3em" /> / 20</td>
+            </tr>
+            <tr>
+                <td class="nowrap">元気消費倍率</td>
+                <td>:</td>
+                <td>
+                    <label for="vitalityCostMultiplier-1">
+                        <input type="radio" name="vitalityCostMultiplier" id="vitalityCostMultiplier-1" value="1" /> ×1
+                    </label>
+                    <label for="vitalityCostMultiplier-2">
+                        <input type="radio" name="vitalityCostMultiplier" id="vitalityCostMultiplier-2" value="2" /> ×2
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="nowrap">アイテム消費倍率</td>
+                <td>:</td>
+                <td>
+                    <label for="itemsCostMultiplier-1">
+                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-1" value="1" /> ×1
+                    </label>
+                    <label for="itemsCostMultiplier-2">
+                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-2" value="2" /> ×2
+                    </label>
+                    <label for="itemsCostMultiplier-3">
+                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-3" value="3" /> ×3
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="nowrap">イベント楽曲獲得pt倍率</td>
+                <td>:</td>
+                <td>
+                    <label for="eventBonusMultiplier-3_0">
+                        <input type="radio" name="eventBonusMultiplier" id="eventBonusMultiplier-3_0" value="3" /> ×3.0
+                    </label>
+                    <label for="eventBonusMultiplier-3_5">
+                        <input type="radio" name="eventBonusMultiplier" id="eventBonusMultiplier-3_5" value="3.5" /> ×3.5
+                    </label>
+                    <label for="eventBonusMultiplier-4_0">
+                        <input type="radio" name="eventBonusMultiplier" id="eventBonusMultiplier-4_0" value="4" /> ×4.0
+                    </label>
+                    <label for="eventBonusMultiplier-4_5">
+                        <input type="radio" name="eventBonusMultiplier" id="eventBonusMultiplier-4_5" value="4.5" /> ×4.5
+                    </label>
+                    <label for="eventBonusMultiplier-5_0">
+                        <input type="radio" name="eventBonusMultiplier" id="eventBonusMultiplier-5_0" value="5" /> ×5.0
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="nowrap">表示コース</td>
+                <td>:</td>
+                <td>
+                    <label for="showCourse_2m_push">
+                        <input type="checkbox" name="showCourse" id="showCourse_2m_push" value="_2m_push" /> 2M ライブ(×1.2)
+                    </label>
+                    <label for="showCourse_2m_live">
+                        <input type="checkbox" name="showCourse" id="showCourse_2m_live" value="_2m_live" /> 2M ライブ(×1.0)
+                    </label>
+                    <label for="showCourse_2m_work">
+                        <input type="checkbox" name="showCourse" id="showCourse_2m_work" value="_2m_work" /> 2M お仕事
+                    </label>
+                    <br />
+                    <label for="showCourse_4m_push">
+                        <input type="checkbox" name="showCourse" id="showCourse_4m_push" value="_4m_push" /> 4M ライブ(×1.2)
+                    </label>
+                    <label for="showCourse_4m_live">
+                        <input type="checkbox" name="showCourse" id="showCourse_4m_live" value="_4m_live" /> 4M ライブ(×1.0)
+                    </label>
+                    <label for="showCourse_4m_work">
+                        <input type="checkbox" name="showCourse" id="showCourse_4m_work" value="_4m_work" /> 4M お仕事
+                    </label>
+                    <br />
+                    <label for="showCourse_6m_push">
+                        <input type="checkbox" name="showCourse" id="showCourse_6m_push" value="_6m_push" /> 6M/2M+ ライブ(×1.2)
+                    </label>
+                    <label for="showCourse_6m_live">
+                        <input type="checkbox" name="showCourse" id="showCourse_6m_live" value="_6m_live" /> 6M/2M+ ライブ(×1.0)
+                    </label>
+                    <label for="showCourse_6m_work">
+                        <input type="checkbox" name="showCourse" id="showCourse_6m_work" value="_6m_work" /> 6M/2M+ お仕事
+                    </label>
+                    <br />
+                    <label for="showCourse_mm_push">
+                        <input type="checkbox" name="showCourse" id="showCourse_mm_push" value="_mm_push" /> MM ライブ(×1.2)
+                    </label>
+                    <label for="showCourse_mm_live">
+                        <input type="checkbox" name="showCourse" id="showCourse_mm_live" value="_mm_live" /> MM ライブ(×1.0)
+                    </label>
+                    <label for="showCourse_mm_work">
+                        <input type="checkbox" name="showCourse" id="showCourse_mm_work" value="_mm_work" /> MM お仕事
+                    </label>
+                    <label for="showCourse_all"> <input type="checkbox" id="showCourse_all" value="all" /> すべて </label>
+                </td>
+            </tr>
+        </table>
+        <table class="solid">
+            <colgroup>
+                <col />
+                <col class="_2m_push" />
+                <col class="_2m_live" />
+                <col class="_2m_work" />
+                <col class="_4m_push" />
+                <col class="_4m_live" />
+                <col class="_4m_work" />
+                <col class="_6m_push" />
+                <col class="_6m_live" />
+                <col class="_6m_work" />
+                <col class="_mm_push" />
+                <col class="_mm_live" />
+                <col class="_mm_work" />
+            </colgroup>
+            <tr>
+                <td rowspan="2"></td>
+                <td colspan="3">2M</td>
+                <td colspan="3">4M</td>
+                <td colspan="3">6M / 2M+</td>
+                <td colspan="3">MM</td>
+            </tr>
+            <tr>
+                <td>ライブ<br />×1.2</td>
+                <td>ライブ<br />×1.0</td>
+                <td>お仕事<br />×0.7</td>
+                <td>ライブ<br />×1.2</td>
+                <td>ライブ<br />×1.0</td>
+                <td>お仕事<br />×0.7</td>
+                <td>ライブ<br />×1.2</td>
+                <td>ライブ<br />×1.0</td>
+                <td>お仕事<br />×0.7</td>
+                <td>ライブ<br />×1.2</td>
+                <td>ライブ<br />×1.0</td>
+                <td>お仕事<br />×0.7</td>
+            </tr>
+            <tr class="stripe">
+                <td>ツアー準備回数</td>
+                <td>
+                    <button class="subtractTourTimes" value="_2m_push">－</button> <span id="tourTimes_2m_push"> </span>
+                    <button class="addTourTimes" value="_2m_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_2m_live">－</button> <span id="tourTimes_2m_live"> </span>
+                    <button class="addTourTimes" value="_2m_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_2m_work">－</button> <span id="tourTimes_2m_work"> </span>
+                    <button class="addTourTimes" value="_2m_work">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_4m_push">－</button> <span id="tourTimes_4m_push"> </span>
+                    <button class="addTourTimes" value="_4m_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_4m_live">－</button> <span id="tourTimes_4m_live"> </span>
+                    <button class="addTourTimes" value="_4m_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_4m_work">－</button> <span id="tourTimes_4m_work"> </span>
+                    <button class="addTourTimes" value="_4m_work">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_6m_push">－</button> <span id="tourTimes_6m_push"> </span>
+                    <button class="addTourTimes" value="_6m_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_6m_live">－</button> <span id="tourTimes_6m_live"> </span>
+                    <button class="addTourTimes" value="_6m_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_6m_work">－</button> <span id="tourTimes_6m_work"> </span>
+                    <button class="addTourTimes" value="_6m_work">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_mm_push">－</button> <span id="tourTimes_mm_push"> </span>
+                    <button class="addTourTimes" value="_mm_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_mm_live">－</button> <span id="tourTimes_mm_live"> </span>
+                    <button class="addTourTimes" value="_mm_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractTourTimes" value="_mm_work">－</button> <span id="tourTimes_mm_work"> </span>
+                    <button class="addTourTimes" value="_mm_work">＋</button>
+                </td>
+            </tr>
+            <tr class="stripe">
+                <td>消費元気</td>
+                <td id="consumedVitality_2m_push"></td>
+                <td id="consumedVitality_2m_live"></td>
+                <td id="consumedVitality_2m_work"></td>
+                <td id="consumedVitality_4m_push"></td>
+                <td id="consumedVitality_4m_live"></td>
+                <td id="consumedVitality_4m_work"></td>
+                <td id="consumedVitality_6m_push"></td>
+                <td id="consumedVitality_6m_live"></td>
+                <td id="consumedVitality_6m_work"></td>
+                <td id="consumedVitality_mm_push"></td>
+                <td id="consumedVitality_mm_live"></td>
+                <td id="consumedVitality_mm_work"></td>
+            </tr>
+            <tr class="stripe">
+                <td>自然回復日時</td>
+                <td id="naturalRecoveryAt_2m_push"></td>
+                <td id="naturalRecoveryAt_2m_live"></td>
+                <td id="naturalRecoveryAt_2m_work"></td>
+                <td id="naturalRecoveryAt_4m_push"></td>
+                <td id="naturalRecoveryAt_4m_live"></td>
+                <td id="naturalRecoveryAt_4m_work"></td>
+                <td id="naturalRecoveryAt_6m_push"></td>
+                <td id="naturalRecoveryAt_6m_live"></td>
+                <td id="naturalRecoveryAt_6m_work"></td>
+                <td id="naturalRecoveryAt_mm_push"></td>
+                <td id="naturalRecoveryAt_mm_live"></td>
+                <td id="naturalRecoveryAt_mm_work"></td>
+            </tr>
+            <tr class="stripe">
+                <td>要回復元気</td>
+                <td id="requiredRecoveryVitality_2m_push"></td>
+                <td id="requiredRecoveryVitality_2m_live"></td>
+                <td id="requiredRecoveryVitality_2m_work"></td>
+                <td id="requiredRecoveryVitality_4m_push"></td>
+                <td id="requiredRecoveryVitality_4m_live"></td>
+                <td id="requiredRecoveryVitality_4m_work"></td>
+                <td id="requiredRecoveryVitality_6m_push"></td>
+                <td id="requiredRecoveryVitality_6m_live"></td>
+                <td id="requiredRecoveryVitality_6m_work"></td>
+                <td id="requiredRecoveryVitality_mm_push"></td>
+                <td id="requiredRecoveryVitality_mm_live"></td>
+                <td id="requiredRecoveryVitality_mm_work"></td>
+            </tr>
+            <tr class="stripe">
+                <td>ツアー準備獲得pt</td>
+                <td id="tourEarnedPoints_2m_push"></td>
+                <td id="tourEarnedPoints_2m_live"></td>
+                <td id="tourEarnedPoints_2m_work"></td>
+                <td id="tourEarnedPoints_4m_push"></td>
+                <td id="tourEarnedPoints_4m_live"></td>
+                <td id="tourEarnedPoints_4m_work"></td>
+                <td id="tourEarnedPoints_6m_push"></td>
+                <td id="tourEarnedPoints_6m_live"></td>
+                <td id="tourEarnedPoints_6m_work"></td>
+                <td id="tourEarnedPoints_mm_push"></td>
+                <td id="tourEarnedPoints_mm_live"></td>
+                <td id="tourEarnedPoints_mm_work"></td>
+            </tr>
+            <tr class="stripe">
+                <td>アイテム獲得数</td>
+                <td id="earnItems_2m_push"></td>
+                <td id="earnItems_2m_live"></td>
+                <td id="earnItems_2m_work"></td>
+                <td id="earnItems_4m_push"></td>
+                <td id="earnItems_4m_live"></td>
+                <td id="earnItems_4m_work"></td>
+                <td id="earnItems_6m_push"></td>
+                <td id="earnItems_6m_live"></td>
+                <td id="earnItems_6m_work"></td>
+                <td id="earnItems_mm_push"></td>
+                <td id="earnItems_mm_live"></td>
+                <td id="earnItems_mm_work"></td>
+            </tr>
+            <tr>
+                <td>イベント楽曲回数</td>
+                <td>
+                    <button class="subtractEventTimes" value="_2m_push">－</button> <span id="eventTimes_2m_push"> </span>
+                    <button class="addEventTimes" value="_2m_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_2m_live">－</button> <span id="eventTimes_2m_live"> </span>
+                    <button class="addEventTimes" value="_2m_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_2m_work">－</button> <span id="eventTimes_2m_work"> </span>
+                    <button class="addEventTimes" value="_2m_work">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_4m_push">－</button> <span id="eventTimes_4m_push"> </span>
+                    <button class="addEventTimes" value="_4m_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_4m_live">－</button> <span id="eventTimes_4m_live"> </span>
+                    <button class="addEventTimes" value="_4m_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_4m_work">－</button> <span id="eventTimes_4m_work"> </span>
+                    <button class="addEventTimes" value="_4m_work">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_6m_push">－</button> <span id="eventTimes_6m_push"> </span>
+                    <button class="addEventTimes" value="_6m_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_6m_live">－</button> <span id="eventTimes_6m_live"> </span>
+                    <button class="addEventTimes" value="_6m_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_6m_work">－</button> <span id="eventTimes_6m_work"> </span>
+                    <button class="addEventTimes" value="_6m_work">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_mm_push">－</button> <span id="eventTimes_mm_push"> </span>
+                    <button class="addEventTimes" value="_mm_push">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_mm_live">－</button> <span id="eventTimes_mm_live"> </span>
+                    <button class="addEventTimes" value="_mm_live">＋</button>
+                </td>
+                <td>
+                    <button class="subtractEventTimes" value="_mm_work">－</button> <span id="eventTimes_mm_work"> </span>
+                    <button class="addEventTimes" value="_mm_work">＋</button>
+                </td>
+            </tr>
+            <tr>
+                <td>イベント楽曲獲得pt倍率</td>
+                <td id="recommendMultiplier_2m_push"></td>
+                <td id="recommendMultiplier_2m_live"></td>
+                <td id="recommendMultiplier_2m_work"></td>
+                <td id="recommendMultiplier_4m_push"></td>
+                <td id="recommendMultiplier_4m_live"></td>
+                <td id="recommendMultiplier_4m_work"></td>
+                <td id="recommendMultiplier_6m_push"></td>
+                <td id="recommendMultiplier_6m_live"></td>
+                <td id="recommendMultiplier_6m_work"></td>
+                <td id="recommendMultiplier_mm_push"></td>
+                <td id="recommendMultiplier_mm_live"></td>
+                <td id="recommendMultiplier_mm_work"></td>
+            </tr>
+            <tr>
+                <td>アイテム消費数</td>
+                <td id="consumedItems_2m_push"></td>
+                <td id="consumedItems_2m_live"></td>
+                <td id="consumedItems_2m_work"></td>
+                <td id="consumedItems_4m_push"></td>
+                <td id="consumedItems_4m_live"></td>
+                <td id="consumedItems_4m_work"></td>
+                <td id="consumedItems_6m_push"></td>
+                <td id="consumedItems_6m_live"></td>
+                <td id="consumedItems_6m_work"></td>
+                <td id="consumedItems_mm_push"></td>
+                <td id="consumedItems_mm_live"></td>
+                <td id="consumedItems_mm_work"></td>
+            </tr>
+            <tr>
+                <td>イベント楽曲獲得pt</td>
+                <td id="eventEarnedPoints_2m_push"></td>
+                <td id="eventEarnedPoints_2m_live"></td>
+                <td id="eventEarnedPoints_2m_work"></td>
+                <td id="eventEarnedPoints_4m_push"></td>
+                <td id="eventEarnedPoints_4m_live"></td>
+                <td id="eventEarnedPoints_4m_work"></td>
+                <td id="eventEarnedPoints_6m_push"></td>
+                <td id="eventEarnedPoints_6m_live"></td>
+                <td id="eventEarnedPoints_6m_work"></td>
+                <td id="eventEarnedPoints_mm_push"></td>
+                <td id="eventEarnedPoints_mm_live"></td>
+                <td id="eventEarnedPoints_mm_work"></td>
+            </tr>
+            <tr class="stripe">
+                <td>所要時間</td>
+                <td id="requiredTime_2m_push"></td>
+                <td id="requiredTime_2m_live"></td>
+                <td id="requiredTime_2m_work"></td>
+                <td id="requiredTime_4m_push"></td>
+                <td id="requiredTime_4m_live"></td>
+                <td id="requiredTime_4m_work"></td>
+                <td id="requiredTime_6m_push"></td>
+                <td id="requiredTime_6m_live"></td>
+                <td id="requiredTime_6m_work"></td>
+                <td id="requiredTime_mm_push"></td>
+                <td id="requiredTime_mm_live"></td>
+                <td id="requiredTime_mm_work"></td>
+            </tr>
+        </table>
+        <div>
+            <button id="update">更新</button> <button id="save">保存</button>
+            <label for="autoSave"> <input type="checkbox" id="autoSave" /> 自動保存 </label>
+        </div>
+        <div>保存日時 : <span id="datetimeSave"> 未保存 </span></div>
+        <div>
+            <button id="clearInput">入力を初期化</button> <button id="loadSave" disabled>保存した値を読込</button>
+            <button id="clearSave" disabled>保存した値を削除</button>
+        </div>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+            integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.10.6/dayjs.min.js"
+            integrity="sha512-bwD3VD/j6ypSSnyjuaURidZksoVx3L1RPvTkleC48SbHCZsemT3VKMD39KknPnH728LLXVMTisESIBOAb5/W0Q=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.10.6/locale/ja.min.js"
+            integrity="sha512-Wnlqvn3V+CPGlJmU+hUsxrDp3S4KKIF7eqlYbPOtAipIOQRHTjk1oZuXvRfaFOZhGmw6leo/V5SqES583KTUDg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+        <script src="script.js" type="text/javascript"></script>
+    </body>
+</html>
