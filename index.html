@@ -63,22 +63,7 @@
                 </td>
             </tr>
             <tr>
-                <td class="nowrap">アイテム消費倍率</td>
-                <td>:</td>
-                <td>
-                    <label for="itemsCostMultiplier-1">
-                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-1" value="1" /> ×1
-                    </label>
-                    <label for="itemsCostMultiplier-2">
-                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-2" value="2" /> ×2
-                    </label>
-                    <label for="itemsCostMultiplier-3">
-                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-3" value="3" /> ×3
-                    </label>
-                </td>
-            </tr>
-            <tr>
-                <td class="nowrap">イベント楽曲獲得pt倍率</td>
+                <td class="nowrap">イベント楽曲pt倍率</td>
                 <td>:</td>
                 <td>
                     <label for="eventBonusMultiplier-3_0">
@@ -95,6 +80,21 @@
                     </label>
                     <label for="eventBonusMultiplier-5_0">
                         <input type="radio" name="eventBonusMultiplier" id="eventBonusMultiplier-5_0" value="5" /> ×5.0
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="nowrap">アイテム消費倍率</td>
+                <td>:</td>
+                <td>
+                    <label for="itemsCostMultiplier-1">
+                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-1" value="1" /> ×1
+                    </label>
+                    <label for="itemsCostMultiplier-2">
+                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-2" value="2" /> ×2
+                    </label>
+                    <label for="itemsCostMultiplier-3">
+                        <input type="radio" name="itemsCostMultiplier" id="itemsCostMultiplier-3" value="3" /> ×3
                     </label>
                 </td>
             </tr>
@@ -146,278 +146,263 @@
             </tr>
         </table>
         <table class="solid">
-            <colgroup>
-                <col />
-                <col class="_2m_push" />
-                <col class="_2m_live" />
-                <col class="_2m_work" />
-                <col class="_4m_push" />
-                <col class="_4m_live" />
-                <col class="_4m_work" />
-                <col class="_6m_push" />
-                <col class="_6m_live" />
-                <col class="_6m_work" />
-                <col class="_mm_push" />
-                <col class="_mm_live" />
-                <col class="_mm_work" />
-            </colgroup>
             <tr>
                 <td rowspan="2"></td>
-                <td colspan="3">2M</td>
-                <td colspan="3">4M</td>
-                <td colspan="3">6M / 2M+</td>
-                <td colspan="3">MM</td>
+                <td class="_2m" colspan="3">2M</td>
+                <td class="_4m" colspan="3">4M</td>
+                <td class="_6m" colspan="3">6M / 2M+</td>
+                <td class="_mm" colspan="3">MM</td>
             </tr>
             <tr>
-                <td>ライブ<br />×1.2</td>
-                <td>ライブ<br />×1.0</td>
-                <td>お仕事<br />×0.7</td>
-                <td>ライブ<br />×1.2</td>
-                <td>ライブ<br />×1.0</td>
-                <td>お仕事<br />×0.7</td>
-                <td>ライブ<br />×1.2</td>
-                <td>ライブ<br />×1.0</td>
-                <td>お仕事<br />×0.7</td>
-                <td>ライブ<br />×1.2</td>
-                <td>ライブ<br />×1.0</td>
-                <td>お仕事<br />×0.7</td>
+                <td class="_2m_push">ライブ<br />×1.2</td>
+                <td class="_2m_live">ライブ<br />×1.0</td>
+                <td class="_2m_work">お仕事<br />×0.7</td>
+                <td class="_4m_push">ライブ<br />×1.2</td>
+                <td class="_4m_live">ライブ<br />×1.0</td>
+                <td class="_4m_work">お仕事<br />×0.7</td>
+                <td class="_6m_push">ライブ<br />×1.2</td>
+                <td class="_6m_live">ライブ<br />×1.0</td>
+                <td class="_6m_work">お仕事<br />×0.7</td>
+                <td class="_mm_push">ライブ<br />×1.2</td>
+                <td class="_mm_live">ライブ<br />×1.0</td>
+                <td class="_mm_work">お仕事<br />×0.7</td>
             </tr>
             <tr class="stripe">
                 <td>ツアー準備回数</td>
-                <td>
+                <td class="_2m_push">
                     <button class="subtractTourTimes" value="_2m_push">－</button> <span id="tourTimes_2m_push"> </span>
                     <button class="addTourTimes" value="_2m_push">＋</button>
                 </td>
-                <td>
+                <td class="_2m_live">
                     <button class="subtractTourTimes" value="_2m_live">－</button> <span id="tourTimes_2m_live"> </span>
                     <button class="addTourTimes" value="_2m_live">＋</button>
                 </td>
-                <td>
+                <td class="_2m_work">
                     <button class="subtractTourTimes" value="_2m_work">－</button> <span id="tourTimes_2m_work"> </span>
                     <button class="addTourTimes" value="_2m_work">＋</button>
                 </td>
-                <td>
+                <td class="_4m_push">
                     <button class="subtractTourTimes" value="_4m_push">－</button> <span id="tourTimes_4m_push"> </span>
                     <button class="addTourTimes" value="_4m_push">＋</button>
                 </td>
-                <td>
+                <td class="_4m_live">
                     <button class="subtractTourTimes" value="_4m_live">－</button> <span id="tourTimes_4m_live"> </span>
                     <button class="addTourTimes" value="_4m_live">＋</button>
                 </td>
-                <td>
+                <td class="_4m_work">
                     <button class="subtractTourTimes" value="_4m_work">－</button> <span id="tourTimes_4m_work"> </span>
                     <button class="addTourTimes" value="_4m_work">＋</button>
                 </td>
-                <td>
+                <td class="_6m_push">
                     <button class="subtractTourTimes" value="_6m_push">－</button> <span id="tourTimes_6m_push"> </span>
                     <button class="addTourTimes" value="_6m_push">＋</button>
                 </td>
-                <td>
+                <td class="_6m_live">
                     <button class="subtractTourTimes" value="_6m_live">－</button> <span id="tourTimes_6m_live"> </span>
                     <button class="addTourTimes" value="_6m_live">＋</button>
                 </td>
-                <td>
+                <td class="_6m_work">
                     <button class="subtractTourTimes" value="_6m_work">－</button> <span id="tourTimes_6m_work"> </span>
                     <button class="addTourTimes" value="_6m_work">＋</button>
                 </td>
-                <td>
+                <td class="_mm_push">
                     <button class="subtractTourTimes" value="_mm_push">－</button> <span id="tourTimes_mm_push"> </span>
                     <button class="addTourTimes" value="_mm_push">＋</button>
                 </td>
-                <td>
+                <td class="_mm_live">
                     <button class="subtractTourTimes" value="_mm_live">－</button> <span id="tourTimes_mm_live"> </span>
                     <button class="addTourTimes" value="_mm_live">＋</button>
                 </td>
-                <td>
+                <td class="_mm_work">
                     <button class="subtractTourTimes" value="_mm_work">－</button> <span id="tourTimes_mm_work"> </span>
                     <button class="addTourTimes" value="_mm_work">＋</button>
                 </td>
             </tr>
             <tr class="stripe">
                 <td>消費元気</td>
-                <td id="consumedVitality_2m_push"></td>
-                <td id="consumedVitality_2m_live"></td>
-                <td id="consumedVitality_2m_work"></td>
-                <td id="consumedVitality_4m_push"></td>
-                <td id="consumedVitality_4m_live"></td>
-                <td id="consumedVitality_4m_work"></td>
-                <td id="consumedVitality_6m_push"></td>
-                <td id="consumedVitality_6m_live"></td>
-                <td id="consumedVitality_6m_work"></td>
-                <td id="consumedVitality_mm_push"></td>
-                <td id="consumedVitality_mm_live"></td>
-                <td id="consumedVitality_mm_work"></td>
+                <td class="_2m_push" id="consumedVitality_2m_push"></td>
+                <td class="_2m_live" id="consumedVitality_2m_live"></td>
+                <td class="_2m_work" id="consumedVitality_2m_work"></td>
+                <td class="_4m_push" id="consumedVitality_4m_push"></td>
+                <td class="_4m_live" id="consumedVitality_4m_live"></td>
+                <td class="_4m_work" id="consumedVitality_4m_work"></td>
+                <td class="_6m_push" id="consumedVitality_6m_push"></td>
+                <td class="_6m_live" id="consumedVitality_6m_live"></td>
+                <td class="_6m_work" id="consumedVitality_6m_work"></td>
+                <td class="_mm_push" id="consumedVitality_mm_push"></td>
+                <td class="_mm_live" id="consumedVitality_mm_live"></td>
+                <td class="_mm_work" id="consumedVitality_mm_work"></td>
             </tr>
             <tr class="stripe">
                 <td>自然回復日時</td>
-                <td id="naturalRecoveryAt_2m_push"></td>
-                <td id="naturalRecoveryAt_2m_live"></td>
-                <td id="naturalRecoveryAt_2m_work"></td>
-                <td id="naturalRecoveryAt_4m_push"></td>
-                <td id="naturalRecoveryAt_4m_live"></td>
-                <td id="naturalRecoveryAt_4m_work"></td>
-                <td id="naturalRecoveryAt_6m_push"></td>
-                <td id="naturalRecoveryAt_6m_live"></td>
-                <td id="naturalRecoveryAt_6m_work"></td>
-                <td id="naturalRecoveryAt_mm_push"></td>
-                <td id="naturalRecoveryAt_mm_live"></td>
-                <td id="naturalRecoveryAt_mm_work"></td>
+                <td class="_2m_push" id="naturalRecoveryAt_2m_push"></td>
+                <td class="_2m_live" id="naturalRecoveryAt_2m_live"></td>
+                <td class="_2m_work" id="naturalRecoveryAt_2m_work"></td>
+                <td class="_4m_push" id="naturalRecoveryAt_4m_push"></td>
+                <td class="_4m_live" id="naturalRecoveryAt_4m_live"></td>
+                <td class="_4m_work" id="naturalRecoveryAt_4m_work"></td>
+                <td class="_6m_push" id="naturalRecoveryAt_6m_push"></td>
+                <td class="_6m_live" id="naturalRecoveryAt_6m_live"></td>
+                <td class="_6m_work" id="naturalRecoveryAt_6m_work"></td>
+                <td class="_mm_push" id="naturalRecoveryAt_mm_push"></td>
+                <td class="_mm_live" id="naturalRecoveryAt_mm_live"></td>
+                <td class="_mm_work" id="naturalRecoveryAt_mm_work"></td>
             </tr>
             <tr class="stripe">
                 <td>要回復元気</td>
-                <td id="requiredRecoveryVitality_2m_push"></td>
-                <td id="requiredRecoveryVitality_2m_live"></td>
-                <td id="requiredRecoveryVitality_2m_work"></td>
-                <td id="requiredRecoveryVitality_4m_push"></td>
-                <td id="requiredRecoveryVitality_4m_live"></td>
-                <td id="requiredRecoveryVitality_4m_work"></td>
-                <td id="requiredRecoveryVitality_6m_push"></td>
-                <td id="requiredRecoveryVitality_6m_live"></td>
-                <td id="requiredRecoveryVitality_6m_work"></td>
-                <td id="requiredRecoveryVitality_mm_push"></td>
-                <td id="requiredRecoveryVitality_mm_live"></td>
-                <td id="requiredRecoveryVitality_mm_work"></td>
-            </tr>
-            <tr class="stripe">
-                <td>ツアー準備獲得pt</td>
-                <td id="tourEarnedPoints_2m_push"></td>
-                <td id="tourEarnedPoints_2m_live"></td>
-                <td id="tourEarnedPoints_2m_work"></td>
-                <td id="tourEarnedPoints_4m_push"></td>
-                <td id="tourEarnedPoints_4m_live"></td>
-                <td id="tourEarnedPoints_4m_work"></td>
-                <td id="tourEarnedPoints_6m_push"></td>
-                <td id="tourEarnedPoints_6m_live"></td>
-                <td id="tourEarnedPoints_6m_work"></td>
-                <td id="tourEarnedPoints_mm_push"></td>
-                <td id="tourEarnedPoints_mm_live"></td>
-                <td id="tourEarnedPoints_mm_work"></td>
+                <td class="_2m_push" id="requiredRecoveryVitality_2m_push"></td>
+                <td class="_2m_live" id="requiredRecoveryVitality_2m_live"></td>
+                <td class="_2m_work" id="requiredRecoveryVitality_2m_work"></td>
+                <td class="_4m_push" id="requiredRecoveryVitality_4m_push"></td>
+                <td class="_4m_live" id="requiredRecoveryVitality_4m_live"></td>
+                <td class="_4m_work" id="requiredRecoveryVitality_4m_work"></td>
+                <td class="_6m_push" id="requiredRecoveryVitality_6m_push"></td>
+                <td class="_6m_live" id="requiredRecoveryVitality_6m_live"></td>
+                <td class="_6m_work" id="requiredRecoveryVitality_6m_work"></td>
+                <td class="_mm_push" id="requiredRecoveryVitality_mm_push"></td>
+                <td class="_mm_live" id="requiredRecoveryVitality_mm_live"></td>
+                <td class="_mm_work" id="requiredRecoveryVitality_mm_work"></td>
             </tr>
             <tr class="stripe">
                 <td>アイテム獲得数</td>
-                <td id="earnItems_2m_push"></td>
-                <td id="earnItems_2m_live"></td>
-                <td id="earnItems_2m_work"></td>
-                <td id="earnItems_4m_push"></td>
-                <td id="earnItems_4m_live"></td>
-                <td id="earnItems_4m_work"></td>
-                <td id="earnItems_6m_push"></td>
-                <td id="earnItems_6m_live"></td>
-                <td id="earnItems_6m_work"></td>
-                <td id="earnItems_mm_push"></td>
-                <td id="earnItems_mm_live"></td>
-                <td id="earnItems_mm_work"></td>
+                <td class="_2m_push" id="earnItems_2m_push"></td>
+                <td class="_2m_live" id="earnItems_2m_live"></td>
+                <td class="_2m_work" id="earnItems_2m_work"></td>
+                <td class="_4m_push" id="earnItems_4m_push"></td>
+                <td class="_4m_live" id="earnItems_4m_live"></td>
+                <td class="_4m_work" id="earnItems_4m_work"></td>
+                <td class="_6m_push" id="earnItems_6m_push"></td>
+                <td class="_6m_live" id="earnItems_6m_live"></td>
+                <td class="_6m_work" id="earnItems_6m_work"></td>
+                <td class="_mm_push" id="earnItems_mm_push"></td>
+                <td class="_mm_live" id="earnItems_mm_live"></td>
+                <td class="_mm_work" id="earnItems_mm_work"></td>
+            </tr>
+            <tr class="stripe">
+                <td>ツアー準備獲得pt</td>
+                <td class="_2m_push" id="tourEarnedPoints_2m_push"></td>
+                <td class="_2m_live" id="tourEarnedPoints_2m_live"></td>
+                <td class="_2m_work" id="tourEarnedPoints_2m_work"></td>
+                <td class="_4m_push" id="tourEarnedPoints_4m_push"></td>
+                <td class="_4m_live" id="tourEarnedPoints_4m_live"></td>
+                <td class="_4m_work" id="tourEarnedPoints_4m_work"></td>
+                <td class="_6m_push" id="tourEarnedPoints_6m_push"></td>
+                <td class="_6m_live" id="tourEarnedPoints_6m_live"></td>
+                <td class="_6m_work" id="tourEarnedPoints_6m_work"></td>
+                <td class="_mm_push" id="tourEarnedPoints_mm_push"></td>
+                <td class="_mm_live" id="tourEarnedPoints_mm_live"></td>
+                <td class="_mm_work" id="tourEarnedPoints_mm_work"></td>
+            </tr>
+            <tr>
+                <td>イベント楽曲pt倍率</td>
+                <td class="_2m_push" id="recommendMultiplier_2m_push"></td>
+                <td class="_2m_live" id="recommendMultiplier_2m_live"></td>
+                <td class="_2m_work" id="recommendMultiplier_2m_work"></td>
+                <td class="_4m_push" id="recommendMultiplier_4m_push"></td>
+                <td class="_4m_live" id="recommendMultiplier_4m_live"></td>
+                <td class="_4m_work" id="recommendMultiplier_4m_work"></td>
+                <td class="_6m_push" id="recommendMultiplier_6m_push"></td>
+                <td class="_6m_live" id="recommendMultiplier_6m_live"></td>
+                <td class="_6m_work" id="recommendMultiplier_6m_work"></td>
+                <td class="_mm_push" id="recommendMultiplier_mm_push"></td>
+                <td class="_mm_live" id="recommendMultiplier_mm_live"></td>
+                <td class="_mm_work" id="recommendMultiplier_mm_work"></td>
             </tr>
             <tr>
                 <td>イベント楽曲回数</td>
-                <td>
+                <td class="_2m_push">
                     <button class="subtractEventTimes" value="_2m_push">－</button> <span id="eventTimes_2m_push"> </span>
                     <button class="addEventTimes" value="_2m_push">＋</button>
                 </td>
-                <td>
+                <td class="_2m_live">
                     <button class="subtractEventTimes" value="_2m_live">－</button> <span id="eventTimes_2m_live"> </span>
                     <button class="addEventTimes" value="_2m_live">＋</button>
                 </td>
-                <td>
+                <td class="_2m_work">
                     <button class="subtractEventTimes" value="_2m_work">－</button> <span id="eventTimes_2m_work"> </span>
                     <button class="addEventTimes" value="_2m_work">＋</button>
                 </td>
-                <td>
+                <td class="_4m_push">
                     <button class="subtractEventTimes" value="_4m_push">－</button> <span id="eventTimes_4m_push"> </span>
                     <button class="addEventTimes" value="_4m_push">＋</button>
                 </td>
-                <td>
+                <td class="_4m_live">
                     <button class="subtractEventTimes" value="_4m_live">－</button> <span id="eventTimes_4m_live"> </span>
                     <button class="addEventTimes" value="_4m_live">＋</button>
                 </td>
-                <td>
+                <td class="_4m_work">
                     <button class="subtractEventTimes" value="_4m_work">－</button> <span id="eventTimes_4m_work"> </span>
                     <button class="addEventTimes" value="_4m_work">＋</button>
                 </td>
-                <td>
+                <td class="_6m_push">
                     <button class="subtractEventTimes" value="_6m_push">－</button> <span id="eventTimes_6m_push"> </span>
                     <button class="addEventTimes" value="_6m_push">＋</button>
                 </td>
-                <td>
+                <td class="_6m_live">
                     <button class="subtractEventTimes" value="_6m_live">－</button> <span id="eventTimes_6m_live"> </span>
                     <button class="addEventTimes" value="_6m_live">＋</button>
                 </td>
-                <td>
+                <td class="_6m_work">
                     <button class="subtractEventTimes" value="_6m_work">－</button> <span id="eventTimes_6m_work"> </span>
                     <button class="addEventTimes" value="_6m_work">＋</button>
                 </td>
-                <td>
+                <td class="_mm_push">
                     <button class="subtractEventTimes" value="_mm_push">－</button> <span id="eventTimes_mm_push"> </span>
                     <button class="addEventTimes" value="_mm_push">＋</button>
                 </td>
-                <td>
+                <td class="_mm_live">
                     <button class="subtractEventTimes" value="_mm_live">－</button> <span id="eventTimes_mm_live"> </span>
                     <button class="addEventTimes" value="_mm_live">＋</button>
                 </td>
-                <td>
+                <td class="_mm_work">
                     <button class="subtractEventTimes" value="_mm_work">－</button> <span id="eventTimes_mm_work"> </span>
                     <button class="addEventTimes" value="_mm_work">＋</button>
                 </td>
             </tr>
             <tr>
-                <td>イベント楽曲獲得pt倍率</td>
-                <td id="recommendMultiplier_2m_push"></td>
-                <td id="recommendMultiplier_2m_live"></td>
-                <td id="recommendMultiplier_2m_work"></td>
-                <td id="recommendMultiplier_4m_push"></td>
-                <td id="recommendMultiplier_4m_live"></td>
-                <td id="recommendMultiplier_4m_work"></td>
-                <td id="recommendMultiplier_6m_push"></td>
-                <td id="recommendMultiplier_6m_live"></td>
-                <td id="recommendMultiplier_6m_work"></td>
-                <td id="recommendMultiplier_mm_push"></td>
-                <td id="recommendMultiplier_mm_live"></td>
-                <td id="recommendMultiplier_mm_work"></td>
-            </tr>
-            <tr>
                 <td>アイテム消費数</td>
-                <td id="consumedItems_2m_push"></td>
-                <td id="consumedItems_2m_live"></td>
-                <td id="consumedItems_2m_work"></td>
-                <td id="consumedItems_4m_push"></td>
-                <td id="consumedItems_4m_live"></td>
-                <td id="consumedItems_4m_work"></td>
-                <td id="consumedItems_6m_push"></td>
-                <td id="consumedItems_6m_live"></td>
-                <td id="consumedItems_6m_work"></td>
-                <td id="consumedItems_mm_push"></td>
-                <td id="consumedItems_mm_live"></td>
-                <td id="consumedItems_mm_work"></td>
+                <td class="_2m_push" id="consumedItems_2m_push"></td>
+                <td class="_2m_live" id="consumedItems_2m_live"></td>
+                <td class="_2m_work" id="consumedItems_2m_work"></td>
+                <td class="_4m_push" id="consumedItems_4m_push"></td>
+                <td class="_4m_live" id="consumedItems_4m_live"></td>
+                <td class="_4m_work" id="consumedItems_4m_work"></td>
+                <td class="_6m_push" id="consumedItems_6m_push"></td>
+                <td class="_6m_live" id="consumedItems_6m_live"></td>
+                <td class="_6m_work" id="consumedItems_6m_work"></td>
+                <td class="_mm_push" id="consumedItems_mm_push"></td>
+                <td class="_mm_live" id="consumedItems_mm_live"></td>
+                <td class="_mm_work" id="consumedItems_mm_work"></td>
             </tr>
             <tr>
                 <td>イベント楽曲獲得pt</td>
-                <td id="eventEarnedPoints_2m_push"></td>
-                <td id="eventEarnedPoints_2m_live"></td>
-                <td id="eventEarnedPoints_2m_work"></td>
-                <td id="eventEarnedPoints_4m_push"></td>
-                <td id="eventEarnedPoints_4m_live"></td>
-                <td id="eventEarnedPoints_4m_work"></td>
-                <td id="eventEarnedPoints_6m_push"></td>
-                <td id="eventEarnedPoints_6m_live"></td>
-                <td id="eventEarnedPoints_6m_work"></td>
-                <td id="eventEarnedPoints_mm_push"></td>
-                <td id="eventEarnedPoints_mm_live"></td>
-                <td id="eventEarnedPoints_mm_work"></td>
+                <td class="_2m_push" id="eventEarnedPoints_2m_push"></td>
+                <td class="_2m_live" id="eventEarnedPoints_2m_live"></td>
+                <td class="_2m_work" id="eventEarnedPoints_2m_work"></td>
+                <td class="_4m_push" id="eventEarnedPoints_4m_push"></td>
+                <td class="_4m_live" id="eventEarnedPoints_4m_live"></td>
+                <td class="_4m_work" id="eventEarnedPoints_4m_work"></td>
+                <td class="_6m_push" id="eventEarnedPoints_6m_push"></td>
+                <td class="_6m_live" id="eventEarnedPoints_6m_live"></td>
+                <td class="_6m_work" id="eventEarnedPoints_6m_work"></td>
+                <td class="_mm_push" id="eventEarnedPoints_mm_push"></td>
+                <td class="_mm_live" id="eventEarnedPoints_mm_live"></td>
+                <td class="_mm_work" id="eventEarnedPoints_mm_work"></td>
             </tr>
             <tr class="stripe">
                 <td>所要時間</td>
-                <td id="requiredTime_2m_push"></td>
-                <td id="requiredTime_2m_live"></td>
-                <td id="requiredTime_2m_work"></td>
-                <td id="requiredTime_4m_push"></td>
-                <td id="requiredTime_4m_live"></td>
-                <td id="requiredTime_4m_work"></td>
-                <td id="requiredTime_6m_push"></td>
-                <td id="requiredTime_6m_live"></td>
-                <td id="requiredTime_6m_work"></td>
-                <td id="requiredTime_mm_push"></td>
-                <td id="requiredTime_mm_live"></td>
-                <td id="requiredTime_mm_work"></td>
+                <td class="_2m_push" id="requiredTime_2m_push"></td>
+                <td class="_2m_live" id="requiredTime_2m_live"></td>
+                <td class="_2m_work" id="requiredTime_2m_work"></td>
+                <td class="_4m_push" id="requiredTime_4m_push"></td>
+                <td class="_4m_live" id="requiredTime_4m_live"></td>
+                <td class="_4m_work" id="requiredTime_4m_work"></td>
+                <td class="_6m_push" id="requiredTime_6m_push"></td>
+                <td class="_6m_live" id="requiredTime_6m_live"></td>
+                <td class="_6m_work" id="requiredTime_6m_work"></td>
+                <td class="_mm_push" id="requiredTime_mm_push"></td>
+                <td class="_mm_live" id="requiredTime_mm_live"></td>
+                <td class="_mm_work" id="requiredTime_mm_work"></td>
             </tr>
         </table>
         <div>

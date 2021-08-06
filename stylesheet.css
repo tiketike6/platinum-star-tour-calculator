@@ -5,11 +5,10 @@
 div {
     padding: 4px 0;
 }
-.nowrap {
+td {
     white-space: nowrap;
 }
 table.solid,
-table.solid th,
 table.solid td {
     border-color: gray;
     border-style: solid;
@@ -17,7 +16,6 @@ table.solid td {
     border-collapse: collapse;
     text-align: center;
     padding: 0 4px;
-    white-space: nowrap;
 }
 .minCost {
     color: #08f;
@@ -25,24 +23,28 @@ table.solid td {
 .timeOver {
     color: #f00;
 }
+._2m,
 ._2m_push,
 ._2m_live,
 ._2m_work {
     background-color: #4f42;
     min-width: 8em;
 }
+._4m,
 ._4m_push,
 ._4m_live,
 ._4m_work {
     background-color: #4bf2;
     min-width: 8em;
 }
+._6m,
 ._6m_push,
 ._6m_live,
 ._6m_work {
     background-color: #f442;
     min-width: 8em;
 }
+._mm,
 ._mm_push,
 ._mm_live,
 ._mm_work {
@@ -51,9 +53,6 @@ table.solid td {
 }
 .stripe {
     background-color: #8884;
-}
-.collapse {
-    visibility: collapse;
 }
 .subtractTourTimes,
 .subtractEventTimes {

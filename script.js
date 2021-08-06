@@ -176,12 +176,21 @@
         });
 
         // 表示
+        $('._2m').prop('colspan', 3);
+        $('._4m').prop('colspan', 3);
+        $('._6m').prop('colspan', 3);
+        $('._mm').prop('colspan', 3);
         Object.keys(vitalityCost).forEach((course) => {
             if (showCourse.length && showCourse.indexOf(course) === -1) {
-                $(`.${course}`).addClass('collapse');
+                $(`.${course}`).hide();
+                const colspan = $(`.${course.slice(0, 3)}`).prop('colspan') - 1;
+                $(`.${course.slice(0, 3)}`).prop('colspan', colspan);
+                if (!colspan) {
+                    $(`.${course.slice(0, 3)}`).hide();
+                }
                 return;
             }
-            $(`.${course}`).removeClass('collapse');
+            $(`.${course}`).show();
 
             let tourTimes = value[eventBonusMultiplier][course].tourTimes;
             if (tourTimes - Math.floor(tourTimes)) {
