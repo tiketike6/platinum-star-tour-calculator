@@ -2,75 +2,88 @@
     font-family: 'メイリオ', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
     font-size: 14px;
 }
-div {
-    padding: 4px 0;
-}
 td {
     white-space: nowrap;
 }
+.error {
+    padding: 0 4px;
+    background-color: #ff000080;
+}
 table.solid,
 table.solid td {
-    border-color: gray;
-    border-style: solid;
     border-width: 1px;
+    border-color: #808080;
     border-collapse: collapse;
-    text-align: center;
+    border-style: solid;
     padding: 0 4px;
-}
-.minCost {
-    color: #08f;
-}
-.timeOver {
-    color: #f00;
+    text-align: center;
 }
 ._2m,
 ._2m_push,
 ._2m_live,
 ._2m_work {
-    background-color: #4f42;
     min-width: 8em;
+    background-color: #40ff4020;
 }
 ._4m,
 ._4m_push,
 ._4m_live,
 ._4m_work {
-    background-color: #4bf2;
     min-width: 8em;
+    background-color: #40a0ff20;
 }
 ._6m,
 ._6m_push,
 ._6m_live,
 ._6m_work {
-    background-color: #f442;
     min-width: 8em;
+    background-color: #ff404020;
 }
 ._mm,
 ._mm_push,
 ._mm_live,
 ._mm_work {
-    background-color: #b4f2;
     min-width: 8em;
+    background-color: #a040ff20;
 }
 .stripe {
-    background-color: #8884;
+    background-color: #80808040;
 }
 .subtractTourTimes,
 .subtractEventTimes {
-    width: 1.5em;
-    height: 1.5em;
+    width: 2em;
+    height: 2em;
     padding: 0;
-    cursor: pointer;
-    border: none;
+    border-width: 1px;
+    border-style: solid;
     border-radius: 1em;
-    color: #f00;
+    color: #ff0000;
+    cursor: pointer;
 }
 .addTourTimes,
 .addEventTimes {
-    width: 1.5em;
-    height: 1.5em;
+    width: 2em;
+    height: 2em;
     padding: 0;
-    cursor: pointer;
-    border: 1px;
+    border-width: 1px;
+    border-style: solid;
     border-radius: 1em;
-    color: #08f;
+    color: #0080ff;
+    cursor: pointer;
+}
+.times {
+    display: inline-block;
+    vertical-align: middle;
+}
+.info {
+    color: #0080ff;
+}
+.warning {
+    color: #ff8000;
+}
+.danger {
+    color: #ff0000;
+}
+.divRow {
+    padding: 4px 0;
 }

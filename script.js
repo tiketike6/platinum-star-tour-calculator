@@ -1,4 +1,5 @@
-(() => {
+/* eslint-disable max-statements */
+(function () {
     // dayjsのロケール設定
     dayjs.locale('ja');
 
@@ -50,65 +51,173 @@
         _mm_work: 0.5,
     };
 
-    // ツアーの計算
-    const calculateTour = () => {
-        const datetimeEnd = $('#datetimeEnd').val();
-        const targetEndVal = $('#targetEnd').val();
-        const ownPointsVal = $('#ownPoints').val();
-        const vitalityVal = $('#vitality').val();
-        const vitalityCostMultiplier = Number($('[name="vitalityCostMultiplier"]:checked').val());
-        const itemsCostMultiplier = Number($('[name="itemsCostMultiplier"]:checked').val());
-        const eventBonusMultiplier = Number($('[name="eventBonusMultiplier"]:checked').val());
-        const showCourse = $('[name="showCourse"]:checked')
+    // 入力値の取得
+    function getFormValue() {
+        const formValue = {};
+        const errors = [];
+
+        function validDateTime(field) {
+            const inputValue = $(`#${field}`).val();
+            if (!inputValue) {
+                errors.push({
+                    field: field,
+                    message: '必須です。',
+                });
+            } else if (!dayjs(inputValue).isValid()) {
+                errors.push({
+                    field: field,
+                    message: '日時の入力例は「2017-06-29T15:00」です。',
+                });
+            } else {
+                formValue[field] = inputValue;
+                formValue[`${field}Unix`] = dayjs(inputValue).unix();
+            }
+        }
+        validDateTime('datetimeStart');
+        validDateTime('datetimeEnd');
+
+        formValue.endOfTodayUnix = dayjs().endOf('d').unix();
+        if (formValue.endOfTodayUnix < formValue.datetimeStartUnix) {
+            formValue.endOfTodayUnix = formValue.datetimeStartUnix;
+        }
+        if (formValue.endOfTodayUnix > formValue.datetimeEndUnix) {
+            formValue.endOfTodayUnix = formValue.datetimeEndUnix;
+        }
+
+        formValue.nowUnix = dayjs().endOf('m').unix();
+        if (formValue.nowUnix < formValue.datetimeStartUnix) {
+            formValue.nowUnix = formValue.datetimeStartUnix;
+            formValue.isFuture = true;
+        }
+        if (formValue.nowUnix > formValue.datetimeEndUnix) {
+            formValue.nowUnix = formValue.datetimeEndUnix;
+        }
+
+        function validNumber(field) {
+            const inputValue = $(`#${field}`).val();
+            if (!inputValue) {
+                errors.push({
+                    field: field,
+                    message: '必須です。',
+                });
+            } else if (!Number.isSafeInteger(Number(inputValue))) {
+                errors.push({
+                    field: field,
+                    message: '有効な値ではありません。',
+                });
+            } else {
+                formValue[field] = Number(inputValue);
+            }
+        }
+        validNumber('targetEnd');
+        validNumber('vitality');
+        validNumber('ownPoints');
+        validNumber('ownItems');
+        validNumber('progress');
+        validNumber('remainingProgress');
+
+        formValue.vitalityCostMultiplier = Number($('[name="vitalityCostMultiplier"]:checked').val());
+        formValue.eventBonusMultiplier = Number($('[name="eventBonusMultiplier"]:checked').val());
+        formValue.itemsCostMultiplier = Number($('[name="itemsCostMultiplier"]:checked').val());
+        formValue.showCourse = $('[name="showCourse"]:checked')
             .map((i) => {
                 return $('[name="showCourse"]:checked').eq(i).val();
             })
             .get();
+        formValue.isAutoSave = $('#autoSave').prop('checked');
 
-        if (!ownPointsVal || !vitalityVal) {
+        $('.error').remove();
+        if (errors.length) {
+            errors.forEach((error) => {
+                $(`#${error.field}`).after(`<span class="error">${error.message}</span>`);
+            });
+            return null;
+        }
+        return formValue;
+    }
+
+    // 目標ポイントを計算
+    function calculateTargetPoint(formValue) {
+        let diffEnd = formValue.targetEnd - formValue.ownPoints;
+        if (diffEnd < 0) {
+            diffEnd = 0;
+        }
+        $('#diffEnd').text(`(あと ${diffEnd.toLocaleString()} pt)`);
+
+        $('#labelToday').text(`${dayjs.unix(formValue.endOfTodayUnix).format('M/D')}の目標pt`);
+
+        const targetToday = Math.round(
+            (formValue.targetEnd * (formValue.endOfTodayUnix - formValue.datetimeStartUnix)) /
+                (formValue.datetimeEndUnix - formValue.datetimeStartUnix)
+        );
+        let diffToday = targetToday - formValue.ownPoints;
+        if (diffToday < 0) {
+            diffToday = 0;
+        }
+        $('#targetToday').text(`${targetToday.toLocaleString()} pt (あと ${diffToday.toLocaleString()} pt)`);
+
+        $('#labelNow').text(`${dayjs.unix(formValue.nowUnix).format('M/D H:mm')}の目標pt`);
+
+        const targetNow = Math.round(
+            (formValue.targetEnd * (formValue.nowUnix - formValue.datetimeStartUnix)) / (formValue.datetimeEndUnix - formValue.datetimeStartUnix)
+        );
+        let diffNow = targetNow - formValue.ownPoints;
+        if (diffNow < 0) {
+            diffNow = 0;
+        }
+        $('#targetNow').text(`${targetNow.toLocaleString()} pt (あと ${diffNow.toLocaleString()} pt)`);
+    }
+
+    // ログインボーナスを考慮
+    function calculateLoginBonus(formValue) {
+        let loginBonus = dayjs.unix(formValue.datetimeEndUnix).endOf('d').diff(dayjs.unix(formValue.nowUnix), 'd') * 2;
+        if (formValue.isFuture) {
+            loginBonus += 2;
+        }
+        $('#loginBonus').text(`+ ログインボーナス ${loginBonus} 個`);
+        formValue.loginBonus = loginBonus;
+    }
+
+    // コース毎の計算
+    function calculateMinByCouse(course, formValue, result, minCost, shouldUseRemainingProgress) {
+        if (formValue.showCourse.length && formValue.showCourse.indexOf(course) === -1) {
+            // 表示コースでなければ計算しない
             return;
         }
 
-        const datetimeEndUnix = dayjs(datetimeEnd).unix();
-        const targetEnd = Number(targetEndVal);
-        const ownPoints = Number(ownPointsVal);
-        const vitality = Number(vitalityVal);
-
-        const value = {};
-        const minCost = {};
-
-        // コース毎の計算
-        const calculateTourByCouse = (course, multiplier) => {
-            let ownItems = $('#ownItems').val();
-            let progress = $('#progress').val();
-
-            if (!ownItems || !progress) {
-                return;
-            }
-
-            ownItems = Number(ownItems);
-            progress = Number(progress);
+        [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
+            let ownItems = formValue.ownItems + formValue.loginBonus;
+            let progress = formValue.progress;
+            let remainingProgress = formValue.remainingProgress;
 
             let tourTimes = 0;
             let consumedVitality = 0;
-            let tourEarnedPoints = 0;
             let earnItems = 0;
+            let tourEarnedPoints = 0;
 
             let eventTimes = 0;
             let consumedItems = 0;
             let eventEarnedPoints = 0;
 
             // ツアー準備回数、イベント楽曲回数を計算
-            while (targetEnd > ownPoints + tourEarnedPoints + eventEarnedPoints) {
+            while (formValue.ownPoints + tourEarnedPoints + eventEarnedPoints < formValue.targetEnd) {
                 // 累積ptが最終目標pt以上になるまで繰り返し
-                if (ownItems) {
-                    // アイテムを消費倍率以上所持している場合、イベント楽曲
+                if (!shouldUseRemainingProgress && ownItems) {
+                    // アイテムを所持している場合、イベント楽曲
+                    ownItems--;
                     eventTimes++;
-                    ownItems -= 1;
-                    consumedItems += 1;
+                    consumedItems++;
                     eventEarnedPoints += 144 * multiplier;
+                } else if (shouldUseRemainingProgress && ownItems >= formValue.itemsCostMultiplier && remainingProgress <= 0) {
+                    // pt5.0倍確定の場合、アイテム消費倍率でイベント楽曲
+                    ownItems -= formValue.itemsCostMultiplier;
+                    remainingProgress = 40;
+                    eventTimes += formValue.itemsCostMultiplier;
+                    consumedItems += formValue.itemsCostMultiplier;
+                    eventEarnedPoints += 144 * multiplier * formValue.itemsCostMultiplier;
                 } else {
-                    // アイテム所持数が消費倍率未満の場合、ツアー準備
+                    // アイテムを所持していない場合、ツアー準備
+                    remainingProgress -= vitalityCost[course] / 5;
                     tourTimes++;
                     consumedVitality += vitalityCost[course];
                     tourEarnedPoints += points[course];
@@ -122,40 +231,56 @@
                 }
             }
 
-            // 消費倍率の調整
-            tourTimes = tourTimes / vitalityCostMultiplier;
-            eventTimes = eventTimes / itemsCostMultiplier;
-
-            // 自然回復日時、要回復元気、所要時間を計算
-            const naturalRecoveryUnix = dayjs()
-                .add((consumedVitality - vitality) * 5, 'm')
+            // 自然回復日時の計算
+            const naturalRecoveryUnix = dayjs
+                .unix(formValue.nowUnix)
+                .add((consumedVitality - formValue.vitality) * 5, 'm')
                 .unix();
 
+            // 要回復元気の計算
             let requiredRecoveryVitality = 0;
-            if (naturalRecoveryUnix > datetimeEndUnix) {
-                requiredRecoveryVitality = Math.ceil((naturalRecoveryUnix - datetimeEndUnix) / 60 / 5);
+            if (naturalRecoveryUnix > formValue.datetimeEndUnix) {
+                requiredRecoveryVitality = Math.ceil((naturalRecoveryUnix - formValue.datetimeEndUnix) / 60 / 5);
             }
 
-            const requiredMinutes = minutes[course] * Math.ceil(tourTimes) + 3 * Math.ceil(eventTimes);
+            // 所要時間の計算
+            const requiredMinutes =
+                minutes[course] * Math.ceil(tourTimes / formValue.vitalityCostMultiplier) + 3 * Math.ceil(eventTimes / formValue.itemsCostMultiplier);
 
             // 計算結果を格納
-            if (!value[multiplier]) {
-                value[multiplier] = {};
+            if (!result[multiplier]) {
+                result[multiplier] = {};
             }
-            value[multiplier][course] = {};
+            result[multiplier][course] = {};
 
-            value[multiplier][course].tourTimes = tourTimes;
-            value[multiplier][course].consumedVitality = consumedVitality;
-            value[multiplier][course].tourEarnedPoints = tourEarnedPoints;
-            value[multiplier][course].earnItems = earnItems;
+            result[multiplier][course].tourTimes = Math.floor(tourTimes / formValue.vitalityCostMultiplier).toLocaleString();
+            if (tourTimes % formValue.vitalityCostMultiplier) {
+                result[multiplier][course].tourTimes += `…${tourTimes % formValue.vitalityCostMultiplier}`;
+            }
+            result[multiplier][course].consumedVitality = consumedVitality;
+            result[multiplier][course].naturalRecoveryUnix = naturalRecoveryUnix;
+            result[multiplier][course].requiredRecoveryVitality = requiredRecoveryVitality;
+            result[multiplier][course].earnItems = earnItems;
+            result[multiplier][course].tourEarnedPoints = tourEarnedPoints;
 
-            value[multiplier][course].eventTimes = eventTimes;
-            value[multiplier][course].consumedItems = consumedItems;
-            value[multiplier][course].eventEarnedPoints = eventEarnedPoints;
+            result[multiplier][course].eventTimes = Math.floor(eventTimes / formValue.itemsCostMultiplier).toLocaleString();
+            if (eventTimes % formValue.itemsCostMultiplier) {
+                result[multiplier][course].eventTimes += `…${eventTimes % formValue.itemsCostMultiplier}`;
+            }
+            result[multiplier][course].consumedItems = consumedItems;
+            result[multiplier][course].eventEarnedPoints = eventEarnedPoints;
 
-            value[multiplier][course].naturalRecoveryUnix = naturalRecoveryUnix;
-            value[multiplier][course].requiredRecoveryVitality = requiredRecoveryVitality;
-            value[multiplier][course].requiredMinutes = requiredMinutes;
+            result[multiplier][course].requiredMinutes = requiredMinutes;
+            result[multiplier][course].requiredTime = '';
+            if (Math.floor(requiredMinutes / 60)) {
+                result[multiplier][course].requiredTime += `${Math.floor(requiredMinutes / 60)}時間`;
+            }
+            if (Math.ceil(requiredMinutes % 60)) {
+                result[multiplier][course].requiredTime += `${Math.ceil(requiredMinutes % 60)}分`;
+            }
+            if (!result[multiplier][course].requiredTime) {
+                result[multiplier][course].requiredTime += '0分';
+            }
 
             // 消費元気、所要時間の最小値を格納
             if (minCost.consumedVitality === undefined || minCost.consumedVitality > consumedVitality) {
@@ -164,15 +289,157 @@
             if (minCost.requiredMinutes === undefined || minCost.requiredMinutes > requiredMinutes) {
                 minCost.requiredMinutes = requiredMinutes;
             }
-        };
+        });
+    }
 
-        Object.keys(vitalityCost).forEach((course) => {
-            if (showCourse.length && showCourse.indexOf(course) === -1) {
-                return;
+    // 計算結果の表示
+    function showResultByCouse(course, formValue, minResult, minCost, maxResult) {
+        if (formValue.showCourse.length && formValue.showCourse.indexOf(course) === -1) {
+            // 表示コースでなければ列を非表示
+            $(`.${course}`).hide();
+            const level = course.slice(0, 3);
+            const colspan = $(`.${level}`).prop('colspan');
+            if (colspan > 1) {
+                $(`.${level}`).prop('colspan', colspan - 1);
+            } else {
+                $(`.${level}`).hide();
             }
-            [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
-                calculateTourByCouse(course, multiplier);
-            });
+            return;
+        }
+        $(`.${course}`).show();
+
+        let recommendMultiplier = formValue.eventBonusMultiplier;
+        [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
+            if (minResult[multiplier][course].eventTimes === minResult[formValue.eventBonusMultiplier][course].eventTimes) {
+                recommendMultiplier = multiplier;
+            }
+        });
+        let fixedRecommendMultiplier = `×${recommendMultiplier.toFixed(1)}`;
+        if (recommendMultiplier !== 5) {
+            fixedRecommendMultiplier += ' ～';
+        }
+
+        function showResultText(field, minValue, maxValue, unit) {
+            let text = minValue;
+            if (recommendMultiplier !== 3 && minValue !== maxValue) {
+                text += ` ～<br>${maxValue}`;
+            }
+            if (unit) {
+                text += ` ${unit}`;
+            }
+            $(`#${field}${course}`).html(text);
+        }
+        showResultText(
+            'tourTimes',
+            minResult[formValue.eventBonusMultiplier][course].tourTimes,
+            maxResult[formValue.eventBonusMultiplier][course].tourTimes
+        );
+        showResultText(
+            'consumedVitality',
+            minResult[formValue.eventBonusMultiplier][course].consumedVitality.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].consumedVitality.toLocaleString()
+        );
+        showResultText(
+            'naturalRecoveryAt',
+            dayjs.unix(minResult[formValue.eventBonusMultiplier][course].naturalRecoveryUnix).format('M/D H:mm'),
+            dayjs.unix(maxResult[formValue.eventBonusMultiplier][course].naturalRecoveryUnix).format('M/D H:mm')
+        );
+        showResultText(
+            'requiredRecoveryVitality',
+            minResult[formValue.eventBonusMultiplier][course].requiredRecoveryVitality.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].requiredRecoveryVitality.toLocaleString()
+        );
+        showResultText(
+            'earnItems',
+            minResult[formValue.eventBonusMultiplier][course].earnItems.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].earnItems.toLocaleString(),
+            '個'
+        );
+        showResultText(
+            'tourEarnedPoints',
+            minResult[formValue.eventBonusMultiplier][course].tourEarnedPoints.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].tourEarnedPoints.toLocaleString(),
+            'pt'
+        );
+
+        $(`#recommendMultiplier${course}`).text(fixedRecommendMultiplier);
+        showResultText(
+            'eventTimes',
+            minResult[formValue.eventBonusMultiplier][course].eventTimes,
+            maxResult[formValue.eventBonusMultiplier][course].eventTimes
+        );
+        showResultText(
+            'consumedItems',
+            minResult[formValue.eventBonusMultiplier][course].consumedItems.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].consumedItems.toLocaleString(),
+            '個'
+        );
+        showResultText(
+            'eventEarnedPoints',
+            minResult[formValue.eventBonusMultiplier][course].eventEarnedPoints.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].eventEarnedPoints.toLocaleString(),
+            'pt'
+        );
+
+        showResultText(
+            'requiredTime',
+            minResult[formValue.eventBonusMultiplier][course].requiredTime,
+            maxResult[formValue.eventBonusMultiplier][course].requiredTime
+        );
+
+        // 消費元気、所要時間の最小値は青文字
+        if (formValue.showCourse.length !== 1 && minResult[formValue.eventBonusMultiplier][course].consumedVitality === minCost.consumedVitality) {
+            $(`#consumedVitality${course}`).addClass('info');
+        } else {
+            $(`#consumedVitality${course}`).removeClass('info');
+        }
+        if (formValue.showCourse.length !== 1 && minResult[formValue.eventBonusMultiplier][course].requiredMinutes === minCost.requiredMinutes) {
+            $(`#requiredTime${course}`).addClass('info');
+        } else {
+            $(`#requiredTime${course}`).removeClass('info');
+        }
+
+        // 最大値が開催期限をオーバーする場合、オレンジ文字
+        if (maxResult[formValue.eventBonusMultiplier][course].naturalRecoveryUnix > formValue.datetimeEndUnix) {
+            $(`#naturalRecoveryAt${course}`).addClass('warning');
+        } else {
+            $(`#naturalRecoveryAt${course}`).removeClass('warning');
+        }
+        if (
+            dayjs.unix(formValue.nowUnix).add(maxResult[formValue.eventBonusMultiplier][course].requiredMinutes, 'm').unix() >
+            formValue.datetimeEndUnix
+        ) {
+            $(`#requiredTime${course}`).addClass('warning');
+        } else {
+            $(`#requiredTime${course}`).removeClass('warning');
+        }
+
+        // 開催期限をオーバーする場合、赤文字
+        if (minResult[formValue.eventBonusMultiplier][course].naturalRecoveryUnix > formValue.datetimeEndUnix) {
+            $(`#naturalRecoveryAt${course}`).addClass('danger');
+        } else {
+            $(`#naturalRecoveryAt${course}`).removeClass('danger');
+        }
+        if (
+            dayjs.unix(formValue.nowUnix).add(minResult[formValue.eventBonusMultiplier][course].requiredMinutes, 'm').unix() >
+            formValue.datetimeEndUnix
+        ) {
+            $(`#requiredTime${course}`).addClass('danger');
+        } else {
+            $(`#requiredTime${course}`).removeClass('danger');
+        }
+    }
+
+    // ツアーの計算
+    function calculateTour(formValue) {
+        const minResult = {};
+        const minCost = {};
+        const maxResult = {};
+
+        // 計算
+        Object.keys(vitalityCost).forEach((course) => {
+            calculateMinByCouse(course, formValue, minResult, minCost);
+            calculateMinByCouse(course, formValue, maxResult, {}, true);
         });
 
         // 表示
@@ -181,338 +448,140 @@
         $('._6m').prop('colspan', 3);
         $('._mm').prop('colspan', 3);
         Object.keys(vitalityCost).forEach((course) => {
-            if (showCourse.length && showCourse.indexOf(course) === -1) {
-                $(`.${course}`).hide();
-                const colspan = $(`.${course.slice(0, 3)}`).prop('colspan') - 1;
-                $(`.${course.slice(0, 3)}`).prop('colspan', colspan);
-                if (!colspan) {
-                    $(`.${course.slice(0, 3)}`).hide();
-                }
-                return;
-            }
-            $(`.${course}`).show();
-
-            let tourTimes = value[eventBonusMultiplier][course].tourTimes;
-            if (tourTimes - Math.floor(tourTimes)) {
-                tourTimes = `${Math.floor(tourTimes).toLocaleString()}…${((tourTimes - Math.floor(tourTimes)) * vitalityCostMultiplier).toFixed()}`;
-            } else {
-                tourTimes = Math.floor(tourTimes).toLocaleString();
-            }
-
-            let eventTimes = value[eventBonusMultiplier][course].eventTimes;
-            if (eventTimes - Math.floor(eventTimes)) {
-                eventTimes = `${Math.floor(eventTimes).toLocaleString()}…${((eventTimes - Math.floor(eventTimes)) * itemsCostMultiplier).toFixed()}`;
-            } else {
-                eventTimes = Math.floor(eventTimes).toLocaleString();
-            }
-
-            let requiredMinutes = value[eventBonusMultiplier][course].requiredMinutes;
-            let requiredTime = `${Math.ceil(requiredMinutes)}分`;
-            if (requiredMinutes > 60) {
-                requiredTime = `${Math.floor(requiredMinutes / 60)}時間`;
-                requiredMinutes = requiredMinutes % 60;
-                if (requiredMinutes > 0) {
-                    requiredTime += `${Math.ceil(requiredMinutes)}分`;
-                }
-            }
-
-            let recommendMultiplier = eventBonusMultiplier;
-            [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
-                if (value[multiplier][course].eventTimes === value[eventBonusMultiplier][course].eventTimes) {
-                    recommendMultiplier = multiplier;
-                }
-            });
-            if (recommendMultiplier === 5) {
-                recommendMultiplier = '×5.0';
-            } else if (recommendMultiplier === 3 || recommendMultiplier === 4) {
-                recommendMultiplier = `×${recommendMultiplier}.0～`;
-            } else {
-                recommendMultiplier = `×${recommendMultiplier}～`;
-            }
-
-            $(`#tourTimes${course}`).text(tourTimes);
-            $(`#consumedVitality${course}`).text(value[eventBonusMultiplier][course].consumedVitality.toLocaleString());
-            $(`#tourEarnedPoints${course}`).text(`${value[eventBonusMultiplier][course].tourEarnedPoints.toLocaleString()} pt`);
-            $(`#earnItems${course}`).text(`${value[eventBonusMultiplier][course].earnItems.toLocaleString()} 個`);
-
-            $(`#eventTimes${course}`).text(eventTimes);
-            $(`#consumedItems${course}`).text(`${value[eventBonusMultiplier][course].consumedItems.toLocaleString()} 個`);
-            $(`#eventEarnedPoints${course}`).text(`${value[eventBonusMultiplier][course].eventEarnedPoints.toLocaleString()} pt`);
-
-            $(`#naturalRecoveryAt${course}`).text(dayjs.unix(value[eventBonusMultiplier][course].naturalRecoveryUnix).format('M/D H:mm'));
-            $(`#requiredRecoveryVitality${course}`).text(value[eventBonusMultiplier][course].requiredRecoveryVitality.toLocaleString());
-            $(`#requiredTime${course}`).text(requiredTime);
-
-            $(`#recommendMultiplier${course}`).text(recommendMultiplier);
-
-            // 消費元気、所要時間の最小値は黄文字
-            if (showCourse.length !== 1 && value[eventBonusMultiplier][course].consumedVitality === minCost.consumedVitality) {
-                $(`#consumedVitality${course}`).addClass('minCost');
-            } else {
-                $(`#consumedVitality${course}`).removeClass('minCost');
-            }
-            if (showCourse.length !== 1 && value[eventBonusMultiplier][course].requiredMinutes === minCost.requiredMinutes) {
-                $(`#requiredTime${course}`).addClass('minCost');
-            } else {
-                $(`#requiredTime${course}`).removeClass('minCost');
-            }
-
-            // 開催期限をオーバーする場合、赤文字
-            if (value[eventBonusMultiplier][course].naturalRecoveryUnix > datetimeEndUnix) {
-                $(`#naturalRecoveryAt${course}`).addClass('timeOver');
-            } else {
-                $(`#naturalRecoveryAt${course}`).removeClass('timeOver');
-            }
-            if (dayjs().add(value[eventBonusMultiplier][course].requiredMinutes, 'm').unix() > datetimeEndUnix) {
-                $(`#requiredTime${course}`).addClass('timeOver');
-            } else {
-                $(`#requiredTime${course}`).removeClass('timeOver');
-            }
+            showResultByCouse(course, formValue, minResult, minCost, maxResult);
         });
-    };
+    }
 
-    // 目標ポイントを計算・表示する
-    const calculateTargetPoint = () => {
-        const datetimeStart = $('#datetimeStart').val();
-        const datetimeEnd = $('#datetimeEnd').val();
-        const targetEnd = $('#targetEnd').val();
-
-        const regex = /^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]$/;
-        if (!regex.test(datetimeStart) || !regex.test(datetimeEnd)) {
-            alert('日時は「2021-01-01T00:00」のように入力してください。');
-            return;
-        }
-        if (!dayjs(datetimeStart).isValid() || !dayjs(datetimeEnd).isValid() || !targetEnd) {
-            return;
-        }
-
-        const datetimeStartUnix = dayjs(datetimeStart).unix();
-        const datetimeEndUnix = dayjs(datetimeEnd).unix();
-        let endOfTodayUnix = dayjs().endOf('d').unix();
-        if (endOfTodayUnix < datetimeStartUnix) {
-            endOfTodayUnix = dayjs.unix(datetimeStartUnix).endOf('d').unix();
-        }
-        if (endOfTodayUnix > datetimeEndUnix) {
-            endOfTodayUnix = datetimeEndUnix;
-        }
-        const nowUnix = dayjs().endOf('m').unix();
-        const targetToday = Math.round((targetEnd * (endOfTodayUnix - datetimeStartUnix)) / (datetimeEndUnix - datetimeStartUnix));
-        const targetNow = Math.round((targetEnd * (nowUnix - datetimeStartUnix)) / (datetimeEndUnix - datetimeStartUnix));
-
-        $('#labelToday').text(`${dayjs.unix(endOfTodayUnix).format('M/D')}の目標pt`);
-        $('#labelNow').text(`${dayjs.unix(nowUnix).format('M/D H:mm')}の目標pt`);
-
-        // ツアー追加分
-        const ownPoints = $('#ownPoints').val() || 0;
-        let diffEnd = targetEnd - ownPoints;
-        if (diffEnd < 0) {
-            diffEnd = 0;
-        }
-        let diffToday = targetToday - ownPoints;
-        if (diffToday < 0) {
-            diffToday = 0;
-        }
-        let diffNow = targetNow - ownPoints;
-        if (diffNow < 0) {
-            diffNow = 0;
-        }
-        $('#diffEnd').text(`(あと ${diffEnd.toLocaleString()} pt)`);
-        $('#targetToday').text(`${targetToday.toLocaleString()} pt (あと ${diffToday.toLocaleString()} pt)`);
-        $('#targetNow').text(`${targetNow.toLocaleString()} pt (あと ${diffNow.toLocaleString()} pt)`);
-        calculateTour();
-
-        if ($('#autoSave').prop('checked')) {
+    function calculate() {
+        const formValue = getFormValue();
+        calculateTargetPoint(formValue);
+        calculateLoginBonus(formValue);
+        calculateTour(formValue);
+        if (formValue.isAutoSave) {
             save();
         }
-    };
+    }
 
     // input要素の変更時
-    $('#datetimeStart').change(calculateTargetPoint);
-    $('#datetimeEnd').change(calculateTargetPoint);
-    $('#targetEnd').change(calculateTargetPoint);
-    $('#autoSave').change(calculateTargetPoint);
-    // ツアー追加分
-    $('#vitality').change(calculateTargetPoint);
-    $('#ownPoints').change(calculateTargetPoint);
-    $('#ownItems').change(calculateTargetPoint);
-    $('#progress').change(calculateTargetPoint);
-    $('[name="vitalityCostMultiplier"]').change(calculateTargetPoint);
-    $('[name="itemsCostMultiplier"]').change(calculateTargetPoint);
-    $('[name="eventBonusMultiplier"]').change(calculateTargetPoint);
+    $('#datetimeStart').change(calculate);
+    $('#datetimeEnd').change(calculate);
+    $('#targetEnd').change(calculate);
+    $('#vitality').change(calculate);
+    $('#ownPoints').change(calculate);
+    $('#ownItems').change(calculate);
+    $('#progress').change(calculate);
+    $('#remainingProgress').change(calculate);
+    $('[name="vitalityCostMultiplier"]').change(calculate);
+    $('[name="eventBonusMultiplier"]').change(calculate);
+    $('[name="itemsCostMultiplier"]').change(calculate);
     $('[name="showCourse"]').change(() => {
-        const showCourse = $('[name="showCourse"]:checked')
-            .map((i) => {
-                return $('[name="showCourse"]:checked').eq(i).val();
-            })
-            .get();
-        if (showCourse.length === 12) {
-            $('#showCourse_all').prop('checked', true);
-        } else {
-            $('#showCourse_all').prop('checked', false);
-        }
-        calculateTargetPoint();
+        $('#showCourse-all').prop('checked', true);
+        $('[name="showCourse"]').each((i) => {
+            if (!$('[name="showCourse"]').eq(i).prop('checked')) {
+                $('#showCourse-all').prop('checked', false);
+            }
+        });
+        calculate();
     });
-    $('#showCourse_all').change(() => {
-        if ($('#showCourse_all').prop('checked')) {
-            $('[name="showCourse"]').each((i) => {
-                $('[name="showCourse"]').eq(i).prop('checked', true);
-            });
-        } else {
-            $('[name="showCourse"]').each((i) => {
-                $('[name="showCourse"]').eq(i).prop('checked', false);
-            });
-        }
-        calculateTargetPoint();
+    $('#showCourse-all').change(() => {
+        $('[name="showCourse"]').each((i) => {
+            $('[name="showCourse"]').eq(i).prop('checked', $('#showCourse-all').prop('checked'));
+        });
+        calculate();
     });
+    $('#autoSave').change(calculate);
+    $('#update').click(calculate);
 
     // 回数増減ボタン
     $('.subtractTourTimes').click(function () {
+        // eslint-disable-next-line no-invalid-this
         const course = $(this).val();
-        const vitalityCostMultiplier = Number($('[name="vitalityCostMultiplier"]:checked').val());
+        const formValue = getFormValue();
 
-        let vitality = $('#vitality').val();
-        if (!vitality) {
-            return;
-        }
-        vitality = Number(vitality);
-        vitality += vitalityCost[course] * vitalityCostMultiplier;
-        $('#vitality').val(vitality);
+        $('#vitality').val(formValue.vitality + vitalityCost[course] * formValue.vitalityCostMultiplier);
+        $('#ownPoints').val(formValue.ownPoints - points[course] * formValue.vitalityCostMultiplier);
 
-        let ownPoints = $('#ownPoints').val();
-        if (!ownPoints) {
-            return;
-        }
-        ownPoints = Number(ownPoints);
-        ownPoints -= points[course] * vitalityCostMultiplier;
-        $('#ownPoints').val(ownPoints);
-
-        let ownItems = $('#ownItems').val();
-        let progress = $('#progress').val();
-        if (!ownItems || !progress) {
-            return;
-        }
-        ownItems = Number(ownItems);
-        progress = Number(progress);
-        progress -= (vitalityCost[course] / 5) * vitalityCostMultiplier;
-        if (progress < 0) {
+        formValue.progress -= (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        if (formValue.progress < 0) {
             // 進捗度が0未満の場合、アイテム消費
-            progress += 20;
-            ownItems--;
-            $('#ownItems').val(ownItems);
+            formValue.progress += 20;
+            $('#ownItems').val(formValue.ownItems - 1);
         }
-        $('#progress').val(progress);
+        $('#progress').val(formValue.progress);
+        formValue.remainingProgress += (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        if (formValue.remainingProgress > 40) {
+            formValue.remainingProgress = 40;
+        }
+        $('#remainingProgress').val(formValue.remainingProgress);
 
-        calculateTargetPoint();
+        calculate();
     });
     $('.addTourTimes').click(function () {
+        // eslint-disable-next-line no-invalid-this
         const course = $(this).val();
-        const vitalityCostMultiplier = Number($('[name="vitalityCostMultiplier"]:checked').val());
+        const formValue = getFormValue();
 
-        let vitality = $('#vitality').val();
-        if (!vitality) {
-            return;
-        }
-        vitality = Number(vitality);
-        vitality -= vitalityCost[course] * vitalityCostMultiplier;
-        $('#vitality').val(vitality);
+        $('#vitality').val(formValue.vitality - vitalityCost[course] * formValue.vitalityCostMultiplier);
+        $('#ownPoints').val(formValue.ownPoints + points[course] * formValue.vitalityCostMultiplier);
 
-        let ownPoints = $('#ownPoints').val();
-        if (!ownPoints) {
-            return;
-        }
-        ownPoints = Number(ownPoints);
-        ownPoints += points[course] * vitalityCostMultiplier;
-        $('#ownPoints').val(ownPoints);
-
-        let ownItems = $('#ownItems').val();
-        let progress = $('#progress').val();
-        if (!ownItems || !progress) {
-            return;
-        }
-        ownItems = Number(ownItems);
-        progress = Number(progress);
-        progress += (vitalityCost[course] / 5) * vitalityCostMultiplier;
-        if (progress >= 20) {
+        formValue.progress += (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        if (formValue.progress >= 20) {
             // 進捗度が20以上の場合、アイテム獲得
-            progress -= 20;
-            ownItems++;
-            $('#ownItems').val(ownItems);
+            formValue.progress -= 20;
+            $('#ownItems').val(formValue.ownItems + 1);
         }
-        $('#progress').val(progress);
+        $('#progress').val(formValue.progress);
+        formValue.remainingProgress -= (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        if (formValue.remainingProgress < 0) {
+            formValue.remainingProgress = 0;
+        }
+        $('#remainingProgress').val(formValue.remainingProgress);
 
-        calculateTargetPoint();
+        calculate();
     });
-    $('.subtractEventTimes').click(function () {
-        const itemsCostMultiplier = Number($('[name="itemsCostMultiplier"]:checked').val());
-        const eventBonusMultiplier = Number($('[name="eventBonusMultiplier"]:checked').val());
+    $('.subtractEventTimes').click(() => {
+        const formValue = getFormValue();
 
-        let ownItems = $('#ownItems').val();
-        if (!ownItems) {
-            return;
-        }
-        ownItems = Number(ownItems);
-        ownItems += itemsCostMultiplier;
-        $('#ownItems').val(ownItems);
+        $('#ownItems').val(formValue.ownItems + formValue.itemsCostMultiplier);
+        $('#ownPoints').val(formValue.ownPoints - 144 * formValue.itemsCostMultiplier * formValue.eventBonusMultiplier);
 
-        let ownPoints = $('#ownPoints').val();
-        if (!ownPoints) {
-            return;
-        }
-        ownPoints = Number(ownPoints);
-        ownPoints -= 144 * itemsCostMultiplier * eventBonusMultiplier;
-        $('#ownPoints').val(ownPoints);
-
-        calculateTargetPoint();
+        calculate();
     });
-    $('.addEventTimes').click(function () {
-        const itemsCostMultiplier = Number($('[name="itemsCostMultiplier"]:checked').val());
-        const eventBonusMultiplier = Number($('[name="eventBonusMultiplier"]:checked').val());
+    $('.addEventTimes').click(() => {
+        const formValue = getFormValue();
 
-        let ownItems = $('#ownItems').val();
-        if (!ownItems) {
-            return;
+        $('#ownItems').val(formValue.ownItems - formValue.itemsCostMultiplier);
+        $('#ownPoints').val(formValue.ownPoints + 144 * formValue.itemsCostMultiplier * formValue.eventBonusMultiplier);
+        if (formValue.remainingProgress <= 0) {
+            $('#remainingProgress').val(40);
         }
-        ownItems = Number(ownItems);
-        ownItems -= itemsCostMultiplier;
-        $('#ownItems').val(ownItems);
 
-        let ownPoints = $('#ownPoints').val();
-        if (!ownPoints) {
-            return;
-        }
-        ownPoints = Number(ownPoints);
-        ownPoints += 144 * itemsCostMultiplier * eventBonusMultiplier;
-        $('#ownPoints').val(ownPoints);
-
-        calculateTargetPoint();
+        calculate();
     });
-
-    // 更新ボタン
-    $('#update').click(calculateTargetPoint);
 
     // 保存ボタン
-    const save = () => {
+    function save() {
         const datetimeSave = dayjs().format('YYYY/M/D H:mm');
 
         const saveData = {
             datetimeStart: $('#datetimeStart').val(),
             datetimeEnd: $('#datetimeEnd').val(),
             targetEnd: $('#targetEnd').val(),
-            autoSave: $('#autoSave').prop('checked'),
-            datetimeSave: datetimeSave,
-            // ツアー追加分
             vitality: $('#vitality').val(),
             ownPoints: $('#ownPoints').val(),
             ownItems: $('#ownItems').val(),
             progress: $('#progress').val(),
+            remainingProgress: $('#remainingProgress').val(),
             vitalityCostMultiplier: $('[name="vitalityCostMultiplier"]:checked').val(),
-            itemsCostMultiplier: $('[name="itemsCostMultiplier"]:checked').val(),
             eventBonusMultiplier: $('[name="eventBonusMultiplier"]:checked').val(),
+            itemsCostMultiplier: $('[name="itemsCostMultiplier"]:checked').val(),
             showCourse: $('[name="showCourse"]:checked')
                 .map((i) => {
                     return $('[name="showCourse"]:checked').eq(i).val();
                 })
                 .get(),
+            autoSave: $('#autoSave').prop('checked'),
+            datetimeSave: datetimeSave,
         };
 
         localStorage.setItem(location.href, JSON.stringify(saveData));
@@ -520,23 +589,22 @@
         $('#datetimeSave').text(datetimeSave);
         $('#loadSave').prop('disabled', false);
         $('#clearSave').prop('disabled', false);
-    };
+    }
     $('#save').click(save);
 
     // 入力を初期化ボタン
-    const defaultInput = () => {
+    function defaultInput() {
         $('#datetimeStart').val(dayjs().subtract(15, 'h').format('YYYY-MM-DDT15:00'));
         $('#datetimeEnd').val(dayjs().subtract(15, 'h').add(1, 'w').format('YYYY-MM-DDT20:59'));
         $('#targetEnd').val(30000);
-        $('#autoSave').prop('checked', false);
-        // ツアー追加分
         $('#vitality').val(0);
         $('#ownPoints').val(0);
         $('#ownItems').val(0);
         $('#progress').val(0);
+        $('#remainingProgress').val(40);
         $('[name="vitalityCostMultiplier"][value="1"]').prop('checked', true);
-        $('[name="itemsCostMultiplier"][value="2"]').prop('checked', true);
         $('[name="eventBonusMultiplier"][value="5"]').prop('checked', true);
+        $('[name="itemsCostMultiplier"][value="2"]').prop('checked', true);
         $('[name="showCourse"]').each((i) => {
             if (
                 ['_2m_push', '_2m_work', '_4m_push', '_4m_work', '_6m_push', '_6m_work', '_mm_push', '_mm_work'].indexOf(
@@ -548,14 +616,15 @@
                 $('[name="showCourse"]').eq(i).prop('checked', false);
             }
         });
-        $('#showCourse_all').prop('checked', false);
+        $('#showCourse-all').prop('checked', false);
+        $('#autoSave').prop('checked', false);
 
-        calculateTargetPoint();
-    };
+        calculate();
+    }
     $('#clearInput').click(defaultInput);
 
     // 保存した値を読込ボタン
-    const loadSavedData = () => {
+    function loadSavedData() {
         const savedString = localStorage.getItem(location.href);
 
         if (!savedString) {
@@ -567,36 +636,33 @@
         $('#datetimeStart').val(savedData.datetimeStart);
         $('#datetimeEnd').val(savedData.datetimeEnd);
         $('#targetEnd').val(savedData.targetEnd);
-        $('#autoSave').prop('checked', savedData.autoSave);
-        // ツアー追加分
         $('#vitality').val(savedData.vitality);
         $('#ownPoints').val(savedData.ownPoints);
         $('#ownItems').val(savedData.ownItems);
         $('#progress').val(savedData.progress);
+        $('#remainingProgress').val(savedData.remainingProgress);
         $(`[name="vitalityCostMultiplier"][value="${savedData.vitalityCostMultiplier}"]`).prop('checked', true);
-        $(`[name="itemsCostMultiplier"][value="${savedData.itemsCostMultiplier}"]`).prop('checked', true);
         $(`[name="eventBonusMultiplier"][value="${savedData.eventBonusMultiplier}"]`).prop('checked', true);
+        $(`[name="itemsCostMultiplier"][value="${savedData.itemsCostMultiplier}"]`).prop('checked', true);
+        $('#showCourse-all').prop('checked', true);
         $('[name="showCourse"]').each((i) => {
             if (savedData.showCourse.indexOf($('[name="showCourse"]').eq(i).val()) !== -1) {
                 $('[name="showCourse"]').eq(i).prop('checked', true);
             } else {
                 $('[name="showCourse"]').eq(i).prop('checked', false);
+                $('#showCourse-all').prop('checked', false);
             }
         });
-        if (savedData.showCourse.length === 12) {
-            $('#showCourse_all').prop('checked', true);
-        } else {
-            $('#showCourse_all').prop('checked', false);
-        }
+        $('#autoSave').prop('checked', savedData.autoSave);
 
-        calculateTargetPoint();
+        calculate();
 
         $('#datetimeSave').text(savedData.datetimeSave);
         $('#loadSave').prop('disabled', false);
         $('#clearSave').prop('disabled', false);
 
         return true;
-    };
+    }
     $('#loadSave').click(loadSavedData);
 
     // 保存した値を削除ボタン
