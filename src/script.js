@@ -200,21 +200,62 @@
             let eventEarnedPoints = 0;
 
             // ツアー準備回数、イベント楽曲回数を計算
-            while (formValue.ownPoints + tourEarnedPoints + eventEarnedPoints < formValue.targetEnd) {
+            while (formValue.targetEnd > formValue.ownPoints + tourEarnedPoints + eventEarnedPoints) {
                 // 累積ptが最終目標pt以上になるまで繰り返し
-                if (!shouldUseRemainingProgress && ownItems) {
-                    // アイテムを所持している場合、イベント楽曲
+                if (
+                    remainingProgress <= 0 &&
+                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 &&
+                    ownItems
+                ) {
+                    // pt5.0倍確定、アイテム消費1倍で達成できる場合、イベント楽曲
                     ownItems--;
+                    remainingProgress = 40;
                     eventTimes++;
                     consumedItems++;
-                    eventEarnedPoints += 144 * multiplier;
-                } else if (shouldUseRemainingProgress && ownItems >= formValue.itemsCostMultiplier && remainingProgress <= 0) {
+                    eventEarnedPoints += 144 * 5;
+                } else if (
+                    remainingProgress <= 0 &&
+                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 * 2 &&
+                    ownItems >= 2 &&
+                    formValue.itemsCostMultiplier >= 2
+                ) {
+                    // pt5.0倍確定、アイテム消費2倍で達成できる場合、イベント楽曲
+                    ownItems -= 2;
+                    remainingProgress = 40;
+                    eventTimes += 2;
+                    consumedItems += 2;
+                    eventEarnedPoints += 144 * 5 * 2;
+                } else if (
+                    remainingProgress <= 0 &&
+                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 * 3 &&
+                    ownItems >= 3 &&
+                    formValue.itemsCostMultiplier >= 3
+                ) {
+                    // pt5.0倍確定、アイテム消費3倍で達成できる場合、イベント楽曲
+                    ownItems -= 3;
+                    remainingProgress = 40;
+                    eventTimes += 3;
+                    consumedItems += 3;
+                    eventEarnedPoints += 144 * 5 * 3;
+                } else if (remainingProgress <= 0 && ownItems >= formValue.itemsCostMultiplier) {
                     // pt5.0倍確定の場合、アイテム消費倍率でイベント楽曲
                     ownItems -= formValue.itemsCostMultiplier;
                     remainingProgress = 40;
                     eventTimes += formValue.itemsCostMultiplier;
                     consumedItems += formValue.itemsCostMultiplier;
-                    eventEarnedPoints += 144 * multiplier * formValue.itemsCostMultiplier;
+                    eventEarnedPoints += 144 * 5 * formValue.itemsCostMultiplier;
+                } else if (formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 3 * ownItems) {
+                    // pt3.0倍で達成できる場合、イベント楽曲
+                    ownItems--;
+                    eventTimes++;
+                    consumedItems++;
+                    eventEarnedPoints += 144 * 3;
+                } else if (!shouldUseRemainingProgress && ownItems) {
+                    // アイテムを所持している場合、イベント楽曲
+                    ownItems--;
+                    eventTimes++;
+                    consumedItems++;
+                    eventEarnedPoints += 144 * multiplier;
                 } else {
                     // アイテムを所持していない場合、ツアー準備
                     remainingProgress -= vitalityCost[course] / 5;
