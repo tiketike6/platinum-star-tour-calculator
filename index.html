@@ -33,7 +33,7 @@
             <tr>
                 <td>元気</td>
                 <td>:</td>
-                <td><input type="number" id="vitality" style="width: 4em" /></td>
+                <td><input type="number" id="stamina" style="width: 4em" /></td>
             </tr>
             <tr>
                 <td>累積イベントpt</td>
@@ -54,14 +54,24 @@
                 </td>
             </tr>
             <tr>
+                <td>イベントミッション</td>
+                <td>:</td>
+                <td>あと <input type="number" id="mission" style="width: 3em" /> 回</td>
+            </tr>
+            <tr>
+                <td>ビンゴ抽選回数</td>
+                <td>:</td>
+                <td>あと <input type="number" id="bingo" style="width: 3em" /> 回</td>
+            </tr>
+            <tr>
                 <td>元気消費倍率</td>
                 <td>:</td>
                 <td>
-                    <label for="vitalityCostMultiplier-1">
-                        <input type="radio" name="vitalityCostMultiplier" id="vitalityCostMultiplier-1" value="1" /> ×1
+                    <label for="staminaCostMultiplier-1">
+                        <input type="radio" name="staminaCostMultiplier" id="staminaCostMultiplier-1" value="1" /> ×1
                     </label>
-                    <label for="vitalityCostMultiplier-2">
-                        <input type="radio" name="vitalityCostMultiplier" id="vitalityCostMultiplier-2" value="2" /> ×2
+                    <label for="staminaCostMultiplier-2">
+                        <input type="radio" name="staminaCostMultiplier" id="staminaCostMultiplier-2" value="2" /> ×2
                     </label>
                 </td>
             </tr>
@@ -170,7 +180,7 @@
                 <td class="_mm_live">ライブ (×1.0)</td>
                 <td class="_mm_work">お仕事 (×0.7)</td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>ツアー準備回数</td>
                 <td class="_2m_push">
                     <button class="subtractTourTimes" value="_2m_push">－</button>
@@ -233,22 +243,22 @@
                     <button class="addTourTimes" value="_mm_work">＋</button>
                 </td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>消費元気</td>
-                <td class="_2m_push" id="consumedVitality_2m_push"></td>
-                <td class="_2m_live" id="consumedVitality_2m_live"></td>
-                <td class="_2m_work" id="consumedVitality_2m_work"></td>
-                <td class="_4m_push" id="consumedVitality_4m_push"></td>
-                <td class="_4m_live" id="consumedVitality_4m_live"></td>
-                <td class="_4m_work" id="consumedVitality_4m_work"></td>
-                <td class="_6m_push" id="consumedVitality_6m_push"></td>
-                <td class="_6m_live" id="consumedVitality_6m_live"></td>
-                <td class="_6m_work" id="consumedVitality_6m_work"></td>
-                <td class="_mm_push" id="consumedVitality_mm_push"></td>
-                <td class="_mm_live" id="consumedVitality_mm_live"></td>
-                <td class="_mm_work" id="consumedVitality_mm_work"></td>
+                <td class="_2m_push" id="consumedStamina_2m_push"></td>
+                <td class="_2m_live" id="consumedStamina_2m_live"></td>
+                <td class="_2m_work" id="consumedStamina_2m_work"></td>
+                <td class="_4m_push" id="consumedStamina_4m_push"></td>
+                <td class="_4m_live" id="consumedStamina_4m_live"></td>
+                <td class="_4m_work" id="consumedStamina_4m_work"></td>
+                <td class="_6m_push" id="consumedStamina_6m_push"></td>
+                <td class="_6m_live" id="consumedStamina_6m_live"></td>
+                <td class="_6m_work" id="consumedStamina_6m_work"></td>
+                <td class="_mm_push" id="consumedStamina_mm_push"></td>
+                <td class="_mm_live" id="consumedStamina_mm_live"></td>
+                <td class="_mm_work" id="consumedStamina_mm_work"></td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>自然回復日時</td>
                 <td class="_2m_push" id="naturalRecoveryAt_2m_push"></td>
                 <td class="_2m_live" id="naturalRecoveryAt_2m_live"></td>
@@ -263,22 +273,22 @@
                 <td class="_mm_live" id="naturalRecoveryAt_mm_live"></td>
                 <td class="_mm_work" id="naturalRecoveryAt_mm_work"></td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>要回復元気</td>
-                <td class="_2m_push" id="requiredRecoveryVitality_2m_push"></td>
-                <td class="_2m_live" id="requiredRecoveryVitality_2m_live"></td>
-                <td class="_2m_work" id="requiredRecoveryVitality_2m_work"></td>
-                <td class="_4m_push" id="requiredRecoveryVitality_4m_push"></td>
-                <td class="_4m_live" id="requiredRecoveryVitality_4m_live"></td>
-                <td class="_4m_work" id="requiredRecoveryVitality_4m_work"></td>
-                <td class="_6m_push" id="requiredRecoveryVitality_6m_push"></td>
-                <td class="_6m_live" id="requiredRecoveryVitality_6m_live"></td>
-                <td class="_6m_work" id="requiredRecoveryVitality_6m_work"></td>
-                <td class="_mm_push" id="requiredRecoveryVitality_mm_push"></td>
-                <td class="_mm_live" id="requiredRecoveryVitality_mm_live"></td>
-                <td class="_mm_work" id="requiredRecoveryVitality_mm_work"></td>
+                <td class="_2m_push" id="requiredRecoveryStamina_2m_push"></td>
+                <td class="_2m_live" id="requiredRecoveryStamina_2m_live"></td>
+                <td class="_2m_work" id="requiredRecoveryStamina_2m_work"></td>
+                <td class="_4m_push" id="requiredRecoveryStamina_4m_push"></td>
+                <td class="_4m_live" id="requiredRecoveryStamina_4m_live"></td>
+                <td class="_4m_work" id="requiredRecoveryStamina_4m_work"></td>
+                <td class="_6m_push" id="requiredRecoveryStamina_6m_push"></td>
+                <td class="_6m_live" id="requiredRecoveryStamina_6m_live"></td>
+                <td class="_6m_work" id="requiredRecoveryStamina_6m_work"></td>
+                <td class="_mm_push" id="requiredRecoveryStamina_mm_push"></td>
+                <td class="_mm_live" id="requiredRecoveryStamina_mm_live"></td>
+                <td class="_mm_work" id="requiredRecoveryStamina_mm_work"></td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>アイテム獲得数</td>
                 <td class="_2m_push" id="earnItems_2m_push"></td>
                 <td class="_2m_live" id="earnItems_2m_live"></td>
@@ -293,7 +303,7 @@
                 <td class="_mm_live" id="earnItems_mm_live"></td>
                 <td class="_mm_work" id="earnItems_mm_work"></td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>ツアー準備獲得pt</td>
                 <td class="_2m_push" id="tourEarnedPoints_2m_push"></td>
                 <td class="_2m_live" id="tourEarnedPoints_2m_live"></td>
@@ -308,7 +318,7 @@
                 <td class="_mm_live" id="tourEarnedPoints_mm_live"></td>
                 <td class="_mm_work" id="tourEarnedPoints_mm_work"></td>
             </tr>
-            <tr>
+            <tr class="stripe">
                 <td>イベント楽曲pt倍率</td>
                 <td class="_2m_push" id="recommendMultiplier_2m_push"></td>
                 <td class="_2m_live" id="recommendMultiplier_2m_live"></td>
@@ -323,7 +333,7 @@
                 <td class="_mm_live" id="recommendMultiplier_mm_live"></td>
                 <td class="_mm_work" id="recommendMultiplier_mm_work"></td>
             </tr>
-            <tr>
+            <tr class="stripe">
                 <td>イベント楽曲回数</td>
                 <td class="_2m_push">
                     <button class="subtractEventTimes" value="_2m_push">－</button>
@@ -386,7 +396,7 @@
                     <button class="addEventTimes" value="_mm_work">＋</button>
                 </td>
             </tr>
-            <tr>
+            <tr class="stripe">
                 <td>アイテム消費数</td>
                 <td class="_2m_push" id="consumedItems_2m_push"></td>
                 <td class="_2m_live" id="consumedItems_2m_live"></td>
@@ -401,7 +411,7 @@
                 <td class="_mm_live" id="consumedItems_mm_live"></td>
                 <td class="_mm_work" id="consumedItems_mm_work"></td>
             </tr>
-            <tr>
+            <tr class="stripe">
                 <td>イベント楽曲獲得pt</td>
                 <td class="_2m_push" id="eventEarnedPoints_2m_push"></td>
                 <td class="_2m_live" id="eventEarnedPoints_2m_live"></td>
@@ -416,7 +426,7 @@
                 <td class="_mm_live" id="eventEarnedPoints_mm_live"></td>
                 <td class="_mm_work" id="eventEarnedPoints_mm_work"></td>
             </tr>
-            <tr class="stripe">
+            <tr>
                 <td>所要時間</td>
                 <td class="_2m_push" id="requiredTime_2m_push"></td>
                 <td class="_2m_live" id="requiredTime_2m_live"></td>

@@ -4,7 +4,7 @@
     dayjs.locale('ja');
 
     // コース毎の元気コストの設定
-    const vitalityCost = {
+    const staminaCost = {
         _2m_push: 15,
         _2m_live: 15,
         _2m_work: 15,
@@ -110,13 +110,15 @@
             }
         }
         validNumber('targetEnd');
-        validNumber('vitality');
+        validNumber('stamina');
         validNumber('ownPoints');
         validNumber('ownItems');
         validNumber('progress');
         validNumber('remainingProgress');
+        validNumber('mission');
+        validNumber('bingo');
 
-        formValue.vitalityCostMultiplier = Number($('[name="vitalityCostMultiplier"]:checked').val());
+        formValue.staminaCostMultiplier = Number($('[name="staminaCostMultiplier"]:checked').val());
         formValue.eventBonusMultiplier = Number($('[name="eventBonusMultiplier"]:checked').val());
         formValue.itemsCostMultiplier = Number($('[name="itemsCostMultiplier"]:checked').val());
         formValue.showCourse = $('[name="showCourse"]:checked')
@@ -185,23 +187,35 @@
             return;
         }
 
+        const isWork = course.indexOf('work') !== -1;
+        const bingoTimes = isWork ? 1 : 2;
+
         [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
             let ownItems = formValue.ownItems + formValue.loginBonus;
             let progress = formValue.progress;
             let remainingProgress = formValue.remainingProgress;
 
             let tourTimes = 0;
-            let consumedVitality = 0;
+            let consumedStamina = 0;
             let earnItems = 0;
             let tourEarnedPoints = 0;
 
             let eventTimes = 0;
+            const eventTimesForMission = {
+                1: 0,
+                2: 0,
+                3: 0,
+            };
             let consumedItems = 0;
             let eventEarnedPoints = 0;
 
             // ツアー準備回数、イベント楽曲回数を計算
-            while (formValue.targetEnd > formValue.ownPoints + tourEarnedPoints + eventEarnedPoints) {
-                // 累積ptが最終目標pt以上になるまで繰り返し
+            while (
+                formValue.targetEnd > formValue.ownPoints + tourEarnedPoints + eventEarnedPoints ||
+                formValue.mission > eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3] ||
+                formValue.bingo > bingoTimes * formValue.staminaCostMultiplier * tourTimes + 3 * formValue.itemsCostMultiplier * eventTimes
+            ) {
+                // 累積ptが最終目標pt以上、ミッション回数・残りビンゴ回数が0以下になるまで繰り返し
                 if (
                     remainingProgress <= 0 &&
                     formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 &&
@@ -211,6 +225,7 @@
                     ownItems--;
                     remainingProgress = 40;
                     eventTimes++;
+                    eventTimesForMission[1]++;
                     consumedItems++;
                     eventEarnedPoints += 144 * 5;
                 } else if (
@@ -223,6 +238,7 @@
                     ownItems -= 2;
                     remainingProgress = 40;
                     eventTimes += 2;
+                    eventTimesForMission[2]++;
                     consumedItems += 2;
                     eventEarnedPoints += 144 * 5 * 2;
                 } else if (
@@ -235,6 +251,7 @@
                     ownItems -= 3;
                     remainingProgress = 40;
                     eventTimes += 3;
+                    eventTimesForMission[3]++;
                     consumedItems += 3;
                     eventEarnedPoints += 144 * 5 * 3;
                 } else if (remainingProgress <= 0 && ownItems >= formValue.itemsCostMultiplier) {
@@ -242,27 +259,30 @@
                     ownItems -= formValue.itemsCostMultiplier;
                     remainingProgress = 40;
                     eventTimes += formValue.itemsCostMultiplier;
+                    eventTimesForMission[formValue.itemsCostMultiplier]++;
                     consumedItems += formValue.itemsCostMultiplier;
                     eventEarnedPoints += 144 * 5 * formValue.itemsCostMultiplier;
-                } else if (formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 3 * ownItems) {
-                    // pt3.0倍で達成できる場合、イベント楽曲
-                    ownItems--;
-                    eventTimes++;
-                    consumedItems++;
-                    eventEarnedPoints += 144 * 3;
                 } else if (!shouldUseRemainingProgress && ownItems) {
                     // アイテムを所持している場合、イベント楽曲
                     ownItems--;
                     eventTimes++;
+                    eventTimesForMission[1]++;
                     consumedItems++;
                     eventEarnedPoints += 144 * multiplier;
+                } else if (formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 3 * ownItems && ownItems) {
+                    // pt3.0倍で達成できる場合、イベント楽曲
+                    ownItems--;
+                    eventTimes++;
+                    eventTimesForMission[1]++;
+                    consumedItems++;
+                    eventEarnedPoints += 144 * 3;
                 } else {
                     // アイテムを所持していない場合、ツアー準備
-                    remainingProgress -= vitalityCost[course] / 5;
+                    remainingProgress -= staminaCost[course] / 5;
                     tourTimes++;
-                    consumedVitality += vitalityCost[course];
+                    consumedStamina += staminaCost[course];
                     tourEarnedPoints += points[course];
-                    progress += vitalityCost[course] / 5;
+                    progress += staminaCost[course] / 5;
                     if (progress >= 20) {
                         // 進捗度が20以上の場合、アイテム獲得
                         progress -= 20;
@@ -272,21 +292,45 @@
                 }
             }
 
+            // ミッションを考慮したイベント楽曲回数を計算
+            function calculateEventTimesForMission() {
+                if (
+                    formValue.itemsCostMultiplier >= 3 &&
+                    eventTimesForMission[1] >= 3 &&
+                    formValue.mission <= eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3] - 2
+                ) {
+                    eventTimesForMission[3]++;
+                    eventTimesForMission[1] -= 3;
+                    calculateEventTimesForMission();
+                }
+                if (
+                    formValue.itemsCostMultiplier >= 2 &&
+                    eventTimesForMission[1] >= 2 &&
+                    formValue.mission <= eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3] - 1
+                ) {
+                    eventTimesForMission[2]++;
+                    eventTimesForMission[1] -= 2;
+                    calculateEventTimesForMission();
+                }
+            }
+            calculateEventTimesForMission();
+
             // 自然回復日時の計算
             const naturalRecoveryUnix = dayjs
                 .unix(formValue.nowUnix)
-                .add((consumedVitality - formValue.vitality) * 5, 'm')
+                .add((consumedStamina - formValue.stamina) * 5, 'm')
                 .unix();
 
             // 要回復元気の計算
-            let requiredRecoveryVitality = 0;
+            let requiredRecoveryStamina = 0;
             if (naturalRecoveryUnix > formValue.datetimeEndUnix) {
-                requiredRecoveryVitality = Math.ceil((naturalRecoveryUnix - formValue.datetimeEndUnix) / 60 / 5);
+                requiredRecoveryStamina = Math.ceil((naturalRecoveryUnix - formValue.datetimeEndUnix) / 60 / 5);
             }
 
             // 所要時間の計算
             const requiredMinutes =
-                minutes[course] * Math.ceil(tourTimes / formValue.vitalityCostMultiplier) + 3 * Math.ceil(eventTimes / formValue.itemsCostMultiplier);
+                minutes[course] * Math.ceil(tourTimes / formValue.staminaCostMultiplier) +
+                3 * (eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3]);
 
             // 計算結果を格納
             if (!result[multiplier]) {
@@ -294,19 +338,31 @@
             }
             result[multiplier][course] = {};
 
-            result[multiplier][course].tourTimes = Math.floor(tourTimes / formValue.vitalityCostMultiplier).toLocaleString();
-            if (tourTimes % formValue.vitalityCostMultiplier) {
-                result[multiplier][course].tourTimes += `…${tourTimes % formValue.vitalityCostMultiplier}`;
+            result[multiplier][course].tourTimes = Math.floor(tourTimes / formValue.staminaCostMultiplier).toLocaleString();
+            if (tourTimes % formValue.staminaCostMultiplier) {
+                result[multiplier][course].tourTimes += `…${tourTimes % formValue.staminaCostMultiplier}`;
             }
-            result[multiplier][course].consumedVitality = consumedVitality;
+            result[multiplier][course].consumedStamina = consumedStamina;
             result[multiplier][course].naturalRecoveryUnix = naturalRecoveryUnix;
-            result[multiplier][course].requiredRecoveryVitality = requiredRecoveryVitality;
+            result[multiplier][course].requiredRecoveryStamina = requiredRecoveryStamina;
             result[multiplier][course].earnItems = earnItems;
             result[multiplier][course].tourEarnedPoints = tourEarnedPoints;
 
-            result[multiplier][course].eventTimes = Math.floor(eventTimes / formValue.itemsCostMultiplier).toLocaleString();
-            if (eventTimes % formValue.itemsCostMultiplier) {
-                result[multiplier][course].eventTimes += `…${eventTimes % formValue.itemsCostMultiplier}`;
+            if (formValue.itemsCostMultiplier === 3) {
+                result[multiplier][course].eventTimes = eventTimesForMission[3].toLocaleString();
+                if (eventTimesForMission[2]) {
+                    result[multiplier][course].eventTimes += `<br>[×2] ${eventTimesForMission[2].toLocaleString()}`;
+                }
+                if (eventTimesForMission[1]) {
+                    result[multiplier][course].eventTimes += `<br>[×1] ${eventTimesForMission[1].toLocaleString()}`;
+                }
+            } else if (formValue.itemsCostMultiplier === 2) {
+                result[multiplier][course].eventTimes = eventTimesForMission[2].toLocaleString();
+                if (eventTimesForMission[1]) {
+                    result[multiplier][course].eventTimes += `<br>[×1] ${eventTimesForMission[1].toLocaleString()}`;
+                }
+            } else {
+                result[multiplier][course].eventTimes = eventTimesForMission[1].toLocaleString();
             }
             result[multiplier][course].consumedItems = consumedItems;
             result[multiplier][course].eventEarnedPoints = eventEarnedPoints;
@@ -324,8 +380,8 @@
             }
 
             // 消費元気、所要時間の最小値を格納
-            if (minCost.consumedVitality === undefined || minCost.consumedVitality > consumedVitality) {
-                minCost.consumedVitality = consumedVitality;
+            if (minCost.consumedStamina === undefined || minCost.consumedStamina > consumedStamina) {
+                minCost.consumedStamina = consumedStamina;
             }
             if (minCost.requiredMinutes === undefined || minCost.requiredMinutes > requiredMinutes) {
                 minCost.requiredMinutes = requiredMinutes;
@@ -360,10 +416,23 @@
             fixedRecommendMultiplier += ' ～';
         }
 
-        function showResultText(field, minValue, maxValue, unit) {
+        function showResultText(field, minValue, maxValue, unit, isVertical, isLink) {
             let text = minValue;
-            if (recommendMultiplier !== 3 && minValue !== maxValue) {
+            if (isLink) {
+                text =
+                    `<a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}` +
+                    `&datetimeEnd=${formValue.datetimeEnd}&consumedStamina=${minValue}&stamina=${formValue.stamina}">${minValue}</a>`;
+            }
+            if (recommendMultiplier !== 3 && minValue !== maxValue && !isVertical && !isLink) {
                 text += ` ～<br>${maxValue}`;
+            }
+            if (recommendMultiplier !== 3 && minValue !== maxValue && isVertical) {
+                text += `<br><span class="vertical">～</span><br>${maxValue}`;
+            }
+            if (recommendMultiplier !== 3 && minValue !== maxValue && isLink) {
+                text +=
+                    ` ～<br><a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}` +
+                    `&datetimeEnd=${formValue.datetimeEnd}&consumedStamina=${maxValue}&stamina=${formValue.stamina}">${maxValue}</a>`;
             }
             if (unit) {
                 text += ` ${unit}`;
@@ -376,9 +445,9 @@
             maxResult[formValue.eventBonusMultiplier][course].tourTimes
         );
         showResultText(
-            'consumedVitality',
-            minResult[formValue.eventBonusMultiplier][course].consumedVitality.toLocaleString(),
-            maxResult[formValue.eventBonusMultiplier][course].consumedVitality.toLocaleString()
+            'consumedStamina',
+            minResult[formValue.eventBonusMultiplier][course].consumedStamina.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].consumedStamina.toLocaleString()
         );
         showResultText(
             'naturalRecoveryAt',
@@ -386,9 +455,12 @@
             dayjs.unix(maxResult[formValue.eventBonusMultiplier][course].naturalRecoveryUnix).format('M/D H:mm')
         );
         showResultText(
-            'requiredRecoveryVitality',
-            minResult[formValue.eventBonusMultiplier][course].requiredRecoveryVitality.toLocaleString(),
-            maxResult[formValue.eventBonusMultiplier][course].requiredRecoveryVitality.toLocaleString()
+            'requiredRecoveryStamina',
+            minResult[formValue.eventBonusMultiplier][course].requiredRecoveryStamina.toLocaleString(),
+            maxResult[formValue.eventBonusMultiplier][course].requiredRecoveryStamina.toLocaleString(),
+            false,
+            false,
+            true
         );
         showResultText(
             'earnItems',
@@ -407,7 +479,9 @@
         showResultText(
             'eventTimes',
             minResult[formValue.eventBonusMultiplier][course].eventTimes,
-            maxResult[formValue.eventBonusMultiplier][course].eventTimes
+            maxResult[formValue.eventBonusMultiplier][course].eventTimes,
+            false,
+            true
         );
         showResultText(
             'consumedItems',
@@ -429,10 +503,10 @@
         );
 
         // 消費元気、所要時間の最小値は青文字
-        if (formValue.showCourse.length !== 1 && minResult[formValue.eventBonusMultiplier][course].consumedVitality === minCost.consumedVitality) {
-            $(`#consumedVitality${course}`).addClass('info');
+        if (formValue.showCourse.length !== 1 && minResult[formValue.eventBonusMultiplier][course].consumedStamina === minCost.consumedStamina) {
+            $(`#consumedStamina${course}`).addClass('info');
         } else {
-            $(`#consumedVitality${course}`).removeClass('info');
+            $(`#consumedStamina${course}`).removeClass('info');
         }
         if (formValue.showCourse.length !== 1 && minResult[formValue.eventBonusMultiplier][course].requiredMinutes === minCost.requiredMinutes) {
             $(`#requiredTime${course}`).addClass('info');
@@ -478,7 +552,7 @@
         const maxResult = {};
 
         // 計算
-        Object.keys(vitalityCost).forEach((course) => {
+        Object.keys(staminaCost).forEach((course) => {
             calculateMinByCouse(course, formValue, minResult, minCost);
             calculateMinByCouse(course, formValue, maxResult, {}, true);
         });
@@ -488,7 +562,7 @@
         $('._4m').prop('colspan', 3);
         $('._6m').prop('colspan', 3);
         $('._mm').prop('colspan', 3);
-        Object.keys(vitalityCost).forEach((course) => {
+        Object.keys(staminaCost).forEach((course) => {
             showResultByCouse(course, formValue, minResult, minCost, maxResult);
         });
     }
@@ -507,12 +581,14 @@
     $('#datetimeStart').change(calculate);
     $('#datetimeEnd').change(calculate);
     $('#targetEnd').change(calculate);
-    $('#vitality').change(calculate);
+    $('#stamina').change(calculate);
     $('#ownPoints').change(calculate);
     $('#ownItems').change(calculate);
     $('#progress').change(calculate);
     $('#remainingProgress').change(calculate);
-    $('[name="vitalityCostMultiplier"]').change(calculate);
+    $('#mission').change(calculate);
+    $('#bingo').change(calculate);
+    $('[name="staminaCostMultiplier"]').change(calculate);
     $('[name="eventBonusMultiplier"]').change(calculate);
     $('[name="itemsCostMultiplier"]').change(calculate);
     $('[name="showCourse"]').change(() => {
@@ -539,21 +615,25 @@
         const course = $(this).val();
         const formValue = getFormValue();
 
-        $('#vitality').val(formValue.vitality + vitalityCost[course] * formValue.vitalityCostMultiplier);
-        $('#ownPoints').val(formValue.ownPoints - points[course] * formValue.vitalityCostMultiplier);
+        $('#stamina').val(formValue.stamina + staminaCost[course] * formValue.staminaCostMultiplier);
+        $('#ownPoints').val(formValue.ownPoints - points[course] * formValue.staminaCostMultiplier);
 
-        formValue.progress -= (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        formValue.progress -= (staminaCost[course] / 5) * formValue.staminaCostMultiplier;
         if (formValue.progress < 0) {
             // 進捗度が0未満の場合、アイテム消費
             formValue.progress += 20;
             $('#ownItems').val(formValue.ownItems - 1);
         }
         $('#progress').val(formValue.progress);
-        formValue.remainingProgress += (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        formValue.remainingProgress += (staminaCost[course] / 5) * formValue.staminaCostMultiplier;
         if (formValue.remainingProgress > 40) {
             formValue.remainingProgress = 40;
         }
         $('#remainingProgress').val(formValue.remainingProgress);
+
+        const isWork = course.indexOf('work') !== -1;
+        const bingoTimes = isWork ? 1 : 2;
+        $('#bingo').val(formValue.bingo + bingoTimes * formValue.staminaCostMultiplier);
 
         calculate();
     });
@@ -562,21 +642,25 @@
         const course = $(this).val();
         const formValue = getFormValue();
 
-        $('#vitality').val(formValue.vitality - vitalityCost[course] * formValue.vitalityCostMultiplier);
-        $('#ownPoints').val(formValue.ownPoints + points[course] * formValue.vitalityCostMultiplier);
+        $('#stamina').val(formValue.stamina - staminaCost[course] * formValue.staminaCostMultiplier);
+        $('#ownPoints').val(formValue.ownPoints + points[course] * formValue.staminaCostMultiplier);
 
-        formValue.progress += (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        formValue.progress += (staminaCost[course] / 5) * formValue.staminaCostMultiplier;
         if (formValue.progress >= 20) {
             // 進捗度が20以上の場合、アイテム獲得
             formValue.progress -= 20;
             $('#ownItems').val(formValue.ownItems + 1);
         }
         $('#progress').val(formValue.progress);
-        formValue.remainingProgress -= (vitalityCost[course] / 5) * formValue.vitalityCostMultiplier;
+        formValue.remainingProgress -= (staminaCost[course] / 5) * formValue.staminaCostMultiplier;
         if (formValue.remainingProgress < 0) {
             formValue.remainingProgress = 0;
         }
         $('#remainingProgress').val(formValue.remainingProgress);
+
+        const isWork = course.indexOf('work') !== -1;
+        const bingoTimes = isWork ? 1 : 2;
+        $('#bingo').val(formValue.bingo - bingoTimes * formValue.staminaCostMultiplier);
 
         calculate();
     });
@@ -585,6 +669,8 @@
 
         $('#ownItems').val(formValue.ownItems + formValue.itemsCostMultiplier);
         $('#ownPoints').val(formValue.ownPoints - 144 * formValue.itemsCostMultiplier * formValue.eventBonusMultiplier);
+        $('#mission').val(formValue.mission + 1);
+        $('#bingo').val(formValue.bingo + 3 * formValue.staminaCostMultiplier);
 
         calculate();
     });
@@ -596,6 +682,8 @@
         if (formValue.remainingProgress <= 0) {
             $('#remainingProgress').val(40);
         }
+        $('#mission').val(formValue.mission - 1);
+        $('#bingo').val(formValue.bingo - 3 * formValue.staminaCostMultiplier);
 
         calculate();
     });
@@ -608,12 +696,14 @@
             datetimeStart: $('#datetimeStart').val(),
             datetimeEnd: $('#datetimeEnd').val(),
             targetEnd: $('#targetEnd').val(),
-            vitality: $('#vitality').val(),
+            stamina: $('#stamina').val(),
             ownPoints: $('#ownPoints').val(),
             ownItems: $('#ownItems').val(),
             progress: $('#progress').val(),
             remainingProgress: $('#remainingProgress').val(),
-            vitalityCostMultiplier: $('[name="vitalityCostMultiplier"]:checked').val(),
+            mission: $('#mission').val(),
+            bingo: $('#bingo').val(),
+            staminaCostMultiplier: $('[name="staminaCostMultiplier"]:checked').val(),
             eventBonusMultiplier: $('[name="eventBonusMultiplier"]:checked').val(),
             itemsCostMultiplier: $('[name="itemsCostMultiplier"]:checked').val(),
             showCourse: $('[name="showCourse"]:checked')
@@ -625,7 +715,7 @@
             datetimeSave: datetimeSave,
         };
 
-        localStorage.setItem(location.href, JSON.stringify(saveData));
+        localStorage.setItem(location.href.replace('index.html', ''), JSON.stringify(saveData));
 
         $('#datetimeSave').text(datetimeSave);
         $('#loadSave').prop('disabled', false);
@@ -638,12 +728,14 @@
         $('#datetimeStart').val(dayjs().subtract(15, 'h').format('YYYY-MM-DDT15:00'));
         $('#datetimeEnd').val(dayjs().subtract(15, 'h').add(1, 'w').format('YYYY-MM-DDT20:59'));
         $('#targetEnd').val(30000);
-        $('#vitality').val(0);
+        $('#stamina').val(0);
         $('#ownPoints').val(0);
         $('#ownItems').val(0);
         $('#progress').val(0);
         $('#remainingProgress').val(40);
-        $('[name="vitalityCostMultiplier"][value="1"]').prop('checked', true);
+        $('#mission').val(30);
+        $('#bingo').val(96);
+        $('[name="staminaCostMultiplier"][value="1"]').prop('checked', true);
         $('[name="eventBonusMultiplier"][value="5"]').prop('checked', true);
         $('[name="itemsCostMultiplier"][value="2"]').prop('checked', true);
         $('[name="showCourse"]').each((i) => {
@@ -666,7 +758,7 @@
 
     // 保存した値を読込ボタン
     function loadSavedData() {
-        const savedString = localStorage.getItem(location.href);
+        const savedString = localStorage.getItem(location.href.replace('index.html', ''));
 
         if (!savedString) {
             return false;
@@ -677,12 +769,14 @@
         $('#datetimeStart').val(savedData.datetimeStart);
         $('#datetimeEnd').val(savedData.datetimeEnd);
         $('#targetEnd').val(savedData.targetEnd);
-        $('#vitality').val(savedData.vitality);
+        $('#stamina').val(savedData.stamina);
         $('#ownPoints').val(savedData.ownPoints);
         $('#ownItems').val(savedData.ownItems);
         $('#progress').val(savedData.progress);
         $('#remainingProgress').val(savedData.remainingProgress);
-        $(`[name="vitalityCostMultiplier"][value="${savedData.vitalityCostMultiplier}"]`).prop('checked', true);
+        $('#mission').val(savedData.mission);
+        $('#bingo').val(savedData.bingo);
+        $(`[name="staminaCostMultiplier"][value="${savedData.staminaCostMultiplier}"]`).prop('checked', true);
         $(`[name="eventBonusMultiplier"][value="${savedData.eventBonusMultiplier}"]`).prop('checked', true);
         $(`[name="itemsCostMultiplier"][value="${savedData.itemsCostMultiplier}"]`).prop('checked', true);
         $('#showCourse-all').prop('checked', true);
@@ -708,7 +802,7 @@
 
     // 保存した値を削除ボタン
     $('#clearSave').click(() => {
-        localStorage.removeItem(location.href);
+        localStorage.removeItem(location.href.replace('index.html', ''));
 
         $('#datetimeSave').text('削除済');
         $('#loadSave').prop('disabled', true);
