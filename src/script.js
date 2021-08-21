@@ -419,9 +419,9 @@
         function showResultText(field, minValue, maxValue, unit, isVertical, isLink) {
             let text = minValue;
             if (isLink) {
-                text =
-                    `<a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}` +
-                    `&datetimeEnd=${formValue.datetimeEnd}&consumedStamina=${minValue}&stamina=${formValue.stamina}">${minValue}</a>`;
+                text = `<a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}&datetimeEnd=${
+                    formValue.datetimeEnd
+                }&consumedStamina=${minValue}&stamina=${formValue.stamina}">${minValue.toLocaleString()}</a>`;
             }
             if (recommendMultiplier !== 3 && minValue !== maxValue && !isVertical && !isLink) {
                 text += ` ～<br>${maxValue}`;
@@ -430,9 +430,9 @@
                 text += `<br><span class="vertical">～</span><br>${maxValue}`;
             }
             if (recommendMultiplier !== 3 && minValue !== maxValue && isLink) {
-                text +=
-                    ` ～<br><a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}` +
-                    `&datetimeEnd=${formValue.datetimeEnd}&consumedStamina=${maxValue}&stamina=${formValue.stamina}">${maxValue}</a>`;
+                text += ` ～<br><a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}&datetimeEnd=${
+                    formValue.datetimeEnd
+                }&consumedStamina=${maxValue}&stamina=${formValue.stamina}">${maxValue.toLocaleString()}</a>`;
             }
             if (unit) {
                 text += ` ${unit}`;
@@ -456,8 +456,8 @@
         );
         showResultText(
             'requiredRecoveryStamina',
-            minResult[formValue.eventBonusMultiplier][course].requiredRecoveryStamina.toLocaleString(),
-            maxResult[formValue.eventBonusMultiplier][course].requiredRecoveryStamina.toLocaleString(),
+            minResult[formValue.eventBonusMultiplier][course].requiredRecoveryStamina,
+            maxResult[formValue.eventBonusMultiplier][course].requiredRecoveryStamina,
             false,
             false,
             true
