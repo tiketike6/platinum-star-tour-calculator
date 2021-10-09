@@ -1,3 +1,4 @@
+/* eslint-disable max-depth */
 /* eslint-disable max-statements */
 (function () {
     // dayjsのロケール設定
@@ -50,6 +51,10 @@
         _mm_live: 3,
         _mm_work: 0.5,
     };
+
+    // イベント楽曲の設定
+    const eventPoints = 144;
+    const eventMinutes = 3;
 
     // 入力値の取得
     function getFormValue() {
@@ -190,155 +195,230 @@
     }
 
     // コース毎の計算
-    function calculateMinByCouse(course, formValue, result, minCost, shouldUseRemainingProgress) {
+    function calculateMinByCouse(course, formValue, result, minCost, isItemsCostMultiplier5Only) {
         if (formValue.showCourse.length && formValue.showCourse.indexOf(course) === -1) {
             // 表示コースでなければ計算しない
             return;
         }
 
         const isWork = course.indexOf('work') !== -1;
-        const bingoTimes = isWork ? 1 : 2;
+        const bingoMultiplier = isWork ? 1 : 2;
 
         [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
-            let ownItems = formValue.ownItems + formValue.loginBonus;
-            let progress = formValue.progress;
-            let remainingProgress = formValue.remainingProgress;
-
-            let tourTimes = 0;
-            let consumedStamina = 0;
-            let earnItems = 0;
-            let tourEarnedPoints = 0;
-
-            let eventTimes = 0;
-            const eventTimesForMission = {
-                1: 0,
-                2: 0,
-                3: 0,
-            };
-            let consumedItems = 0;
-            let eventEarnedPoints = 0;
-
             // ツアー準備回数、イベント楽曲回数を計算
-            while (
-                formValue.targetEnd > formValue.ownPoints + tourEarnedPoints + eventEarnedPoints ||
-                formValue.mission > eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3] ||
-                formValue.bingo > bingoTimes * formValue.staminaCostMultiplier * tourTimes + 3 * formValue.itemsCostMultiplier * eventTimes
-            ) {
-                // 累積ptが最終目標pt以上、ミッション回数・残りビンゴ回数が0以下になるまで繰り返し
-                if (
-                    remainingProgress <= 0 &&
-                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 &&
-                    ownItems
-                ) {
-                    // pt5.0倍確定、アイテム消費1倍で達成できる場合、イベント楽曲
-                    ownItems--;
-                    remainingProgress = 40;
-                    eventTimes++;
-                    eventTimesForMission[1]++;
-                    consumedItems++;
-                    eventEarnedPoints += 144 * 5;
-                } else if (
-                    remainingProgress <= 0 &&
-                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 * 2 &&
-                    ownItems >= 2 &&
-                    formValue.itemsCostMultiplier >= 2
-                ) {
-                    // pt5.0倍確定、アイテム消費2倍で達成できる場合、イベント楽曲
-                    ownItems -= 2;
-                    remainingProgress = 40;
-                    eventTimes += 2;
-                    eventTimesForMission[2]++;
-                    consumedItems += 2;
-                    eventEarnedPoints += 144 * 5 * 2;
-                } else if (
-                    remainingProgress <= 0 &&
-                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 5 * 3 &&
-                    ownItems >= 3 &&
-                    formValue.itemsCostMultiplier >= 3
-                ) {
-                    // pt5.0倍確定、アイテム消費3倍で達成できる場合、イベント楽曲
-                    ownItems -= 3;
-                    remainingProgress = 40;
-                    eventTimes += 3;
-                    eventTimesForMission[3]++;
-                    consumedItems += 3;
-                    eventEarnedPoints += 144 * 5 * 3;
-                } else if (remainingProgress <= 0 && ownItems >= formValue.itemsCostMultiplier) {
-                    // pt5.0倍確定の場合、アイテム消費倍率でイベント楽曲
-                    ownItems -= formValue.itemsCostMultiplier;
-                    remainingProgress = 40;
-                    eventTimes += formValue.itemsCostMultiplier;
-                    eventTimesForMission[formValue.itemsCostMultiplier]++;
-                    consumedItems += formValue.itemsCostMultiplier;
-                    eventEarnedPoints += 144 * 5 * formValue.itemsCostMultiplier;
-                } else if (
-                    (!shouldUseRemainingProgress || multiplier === 3) &&
-                    formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * multiplier * ownItems &&
-                    ownItems
-                ) {
-                    // アイテムで達成できる場合、イベント楽曲
-                    ownItems--;
-                    eventTimes++;
-                    eventTimesForMission[1]++;
-                    consumedItems++;
-                    eventEarnedPoints += 144 * multiplier;
-                } else if ((!shouldUseRemainingProgress || multiplier === 3) && ownItems >= formValue.itemsCostMultiplier) {
-                    // アイテムを所持している場合、イベント楽曲
-                    ownItems--;
-                    eventTimes++;
-                    eventTimesForMission[1]++;
-                    consumedItems++;
-                    eventEarnedPoints += 144 * multiplier;
-                } else if (formValue.targetEnd <= formValue.ownPoints + tourEarnedPoints + eventEarnedPoints + 144 * 3 * ownItems && ownItems) {
-                    // pt3.0倍で達成できる場合、イベント楽曲
-                    ownItems--;
-                    eventTimes++;
-                    eventTimesForMission[1]++;
-                    consumedItems++;
-                    eventEarnedPoints += 144 * 3;
-                } else {
-                    // アイテムを所持していない場合、ツアー準備
-                    remainingProgress -= staminaCost[course] / 5;
-                    tourTimes++;
-                    consumedStamina += staminaCost[course];
-                    tourEarnedPoints += points[course];
-                    progress += staminaCost[course] / 5;
-                    if (progress >= 20) {
-                        // 進捗度が20以上の場合、アイテム獲得
-                        progress -= 20;
-                        ownItems++; // 計算用
-                        earnItems++; // 表示用
+            const results = [];
+
+            const mission = formValue.mission > 0 ? formValue.mission : 0;
+            const maxMissionOf3 = formValue.itemsCostMultiplier >= 3 ? mission : 0;
+            for (let i3 = maxMissionOf3; i3 >= 0; i3--) {
+                const maxMissionOf2 = formValue.itemsCostMultiplier >= 2 ? mission - i3 : 0;
+                for (let i2 = maxMissionOf2; i2 >= 0; i2--) {
+                    const missionTimes = {
+                        1: mission - i3 - i2,
+                        2: i2,
+                        3: i3,
+                    };
+
+                    let ownItems = formValue.ownItems + formValue.loginBonus;
+                    let progress = formValue.progress;
+                    let remainingProgress = formValue.remainingProgress;
+
+                    const temp = {};
+                    temp.tourTimes = 0;
+                    temp.consumedStamina = 0;
+                    temp.earnItems = 0;
+                    temp.tourEarnedPoints = 0;
+
+                    temp.eventTimes = {
+                        1: 0,
+                        2: 0,
+                        3: 0,
+                    };
+                    temp.consumedItems = 0;
+                    temp.eventEarnedPoints = 0;
+
+                    const hasMission = (itemsCostMultiplier) => {
+                        if (missionTimes[itemsCostMultiplier] - temp.eventTimes[itemsCostMultiplier] > 1) return true;
+                        if (itemsCostMultiplier !== 1 && missionTimes[1] - temp.eventTimes[1] > 0) return true;
+                        if (itemsCostMultiplier !== 2 && missionTimes[2] - temp.eventTimes[2] > 0) return true;
+                        if (itemsCostMultiplier !== 3 && missionTimes[3] - temp.eventTimes[3] > 0) return true;
+                        return false;
+                    };
+
+                    while (
+                        hasMission() ||
+                        formValue.targetEnd > formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints ||
+                        formValue.bingo >
+                            bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3])
+                    ) {
+                        // ミッション回数が0以下、累積ptが最終目標pt以上、残りビンゴ回数が0以下になるまで繰り返し
+                        const itemsCostMultiplierOf5 = (() => {
+                            if (missionTimes[3] - temp.eventTimes[3] > 0) return 3;
+                            if (missionTimes[2] - temp.eventTimes[2] > 0) return 2;
+                            if (missionTimes[1] - temp.eventTimes[1] > 0) return 1;
+                            return formValue.itemsCostMultiplier;
+                        })();
+                        const itemsCostMultiplierOfNot5 = (() => {
+                            if (missionTimes[1] - temp.eventTimes[1] > 0) return 1;
+                            if (missionTimes[2] - temp.eventTimes[2] > 0) return 2;
+                            if (missionTimes[3] - temp.eventTimes[3] > 0) return 3;
+                            return formValue.itemsCostMultiplier;
+                        })();
+
+                        if (
+                            remainingProgress <= 0 &&
+                            ownItems &&
+                            !hasMission(1) &&
+                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 5 &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 1)
+                        ) {
+                            // pt5.0倍確定、アイテム消費1倍で達成できる場合、イベント楽曲
+                            remainingProgress = 40;
+                            ownItems--;
+                            temp.eventTimes[1]++;
+                            temp.consumedItems++;
+                            temp.eventEarnedPoints += eventPoints * 5;
+                        } else if (
+                            remainingProgress <= 0 &&
+                            ownItems >= 2 &&
+                            formValue.itemsCostMultiplier >= 2 &&
+                            !hasMission(2) &&
+                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 5 * 2 &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 2)
+                        ) {
+                            // pt5.0倍確定、アイテム消費2倍で達成できる場合、イベント楽曲
+                            remainingProgress = 40;
+                            ownItems -= 2;
+                            temp.eventTimes[2]++;
+                            temp.consumedItems += 2;
+                            temp.eventEarnedPoints += eventPoints * 5 * 2;
+                        } else if (remainingProgress <= 0 && ownItems >= itemsCostMultiplierOf5) {
+                            // pt5.0倍確定、アイテムを所持している場合、イベント楽曲
+                            remainingProgress = 40;
+                            ownItems -= itemsCostMultiplierOf5;
+                            temp.eventTimes[itemsCostMultiplierOf5]++;
+                            temp.consumedItems += itemsCostMultiplierOf5;
+                            temp.eventEarnedPoints += eventPoints * 5 * itemsCostMultiplierOf5;
+                        } else if (
+                            !isItemsCostMultiplier5Only &&
+                            ownItems &&
+                            !hasMission(1) &&
+                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * multiplier &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 1)
+                        ) {
+                            // pt任意倍率、アイテム消費1倍で達成できる場合、イベント楽曲
+                            ownItems--;
+                            temp.eventTimes[1]++;
+                            temp.consumedItems++;
+                            temp.eventEarnedPoints += eventPoints * multiplier;
+                        } else if (
+                            !isItemsCostMultiplier5Only &&
+                            ownItems >= 2 &&
+                            formValue.itemsCostMultiplier >= 2 &&
+                            !hasMission(2) &&
+                            formValue.targetEnd <=
+                                formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * multiplier * 2 &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 2)
+                        ) {
+                            // pt任意倍率、アイテム消費2倍で達成できる場合、イベント楽曲
+                            ownItems -= 2;
+                            temp.eventTimes[2]++;
+                            temp.consumedItems += 2;
+                            temp.eventEarnedPoints += eventPoints * multiplier * 2;
+                        } else if (!isItemsCostMultiplier5Only && ownItems >= itemsCostMultiplierOfNot5) {
+                            // pt任意倍率、アイテムを所持している場合、イベント楽曲
+                            ownItems -= itemsCostMultiplierOfNot5;
+                            temp.eventTimes[itemsCostMultiplierOfNot5]++;
+                            temp.consumedItems += itemsCostMultiplierOfNot5;
+                            temp.eventEarnedPoints += eventPoints * multiplier * itemsCostMultiplierOfNot5;
+                        } else if (
+                            ownItems &&
+                            !hasMission(1) &&
+                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 3 &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 1)
+                        ) {
+                            // pt3.0倍、アイテム消費1倍で達成できる場合、イベント楽曲
+                            ownItems--;
+                            temp.eventTimes[1]++;
+                            temp.consumedItems++;
+                            temp.eventEarnedPoints += eventPoints * 3;
+                        } else if (
+                            ownItems >= 2 &&
+                            formValue.itemsCostMultiplier >= 2 &&
+                            !hasMission(2) &&
+                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 3 * 2 &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 2)
+                        ) {
+                            // pt3.0倍、アイテム消費2倍で達成できる場合、イベント楽曲
+                            ownItems -= 2;
+                            temp.eventTimes[2]++;
+                            temp.consumedItems += 2;
+                            temp.eventEarnedPoints += eventPoints * 3 * 2;
+                        } else if (
+                            ownItems >= 3 &&
+                            formValue.itemsCostMultiplier >= 3 &&
+                            !hasMission(3) &&
+                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 3 * 3 &&
+                            formValue.bingo <=
+                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
+                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 3)
+                        ) {
+                            // pt3.0倍、アイテム消費3倍で達成できる場合、イベント楽曲
+                            ownItems -= 3;
+                            temp.eventTimes[3]++;
+                            temp.consumedItems += 3;
+                            temp.eventEarnedPoints += eventPoints * 3 * 3;
+                        } else {
+                            // アイテムを所持していない場合、ツアー準備
+                            remainingProgress -= staminaCost[course] / 5;
+                            temp.tourTimes++;
+                            temp.consumedStamina += staminaCost[course];
+                            temp.tourEarnedPoints += points[course];
+                            progress += staminaCost[course] / 5;
+                            if (progress >= 20) {
+                                // 進捗度が20以上の場合、アイテム獲得
+                                progress -= 20;
+                                ownItems++; // 計算用
+                                temp.earnItems++; // 表示用
+                            }
+                        }
                     }
+
+                    // 所要時間の計算
+                    temp.requiredMinutes =
+                        minutes[course] * Math.ceil(temp.tourTimes / formValue.staminaCostMultiplier) +
+                        eventMinutes * (temp.eventTimes[1] + temp.eventTimes[2] + temp.eventTimes[3]);
+
+                    results.push(temp);
                 }
             }
 
-            // ミッションを考慮したイベント楽曲回数を計算
-            function calculateEventTimesForMission() {
-                if (
-                    formValue.itemsCostMultiplier >= 3 &&
-                    eventTimesForMission[1] >= 3 &&
-                    formValue.mission <= eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3] - 2
-                ) {
-                    eventTimesForMission[3]++;
-                    eventTimesForMission[1] -= 3;
-                    calculateEventTimesForMission();
-                }
-                if (
-                    formValue.itemsCostMultiplier >= 2 &&
-                    eventTimesForMission[1] >= 2 &&
-                    formValue.mission <= eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3] - 1
-                ) {
-                    eventTimesForMission[2]++;
-                    eventTimesForMission[1] -= 2;
-                    calculateEventTimesForMission();
-                }
-            }
-            calculateEventTimesForMission();
+            const bestResult = results.sort((a, b) => {
+                // 消費元気の少ない方
+                if (a.consumedStamina - b.consumedStamina !== 0) return a.consumedStamina - b.consumedStamina;
+                // 所要時間の少ない方
+                if (a.requiredMinutes - b.requiredMinutes !== 0) return a.requiredMinutes - b.requiredMinutes;
+                // 獲得ポイントの多い方
+                return b.tourEarnedPoints + b.eventEarnedPoints - (a.tourEarnedPoints + a.eventEarnedPoints);
+            })[0];
 
             // 自然回復日時の計算
             const naturalRecoveryUnix = dayjs
                 .unix(formValue.nowUnix)
-                .add((consumedStamina - formValue.stamina) * 5, 'm')
+                .add((bestResult.consumedStamina - formValue.stamina) * 5, 'm')
                 .unix();
 
             // 要回復元気の計算
@@ -347,11 +427,6 @@
                 requiredRecoveryStamina = Math.ceil((naturalRecoveryUnix - formValue.datetimeEndUnix) / 60 / 5);
             }
 
-            // 所要時間の計算
-            const requiredMinutes =
-                minutes[course] * Math.ceil(tourTimes / formValue.staminaCostMultiplier) +
-                3 * (eventTimesForMission[1] + eventTimesForMission[2] + eventTimesForMission[3]);
-
             // 計算結果を格納
             if (!result[multiplier]) {
                 result[multiplier] = {};
@@ -359,48 +434,50 @@
             result[multiplier][course] = {};
 
             result[multiplier][course].tourTimes = {};
-            result[multiplier][course].tourTimes[formValue.staminaCostMultiplier] = Math.floor(tourTimes / formValue.staminaCostMultiplier);
+            result[multiplier][course].tourTimes[formValue.staminaCostMultiplier] = Math.floor(
+                bestResult.tourTimes / formValue.staminaCostMultiplier
+            );
             if (formValue.staminaCostMultiplier === 2) {
-                result[multiplier][course].tourTimes[1] = tourTimes % formValue.staminaCostMultiplier;
+                result[multiplier][course].tourTimes[1] = bestResult.tourTimes % formValue.staminaCostMultiplier;
             }
-            result[multiplier][course].consumedStamina = consumedStamina;
+            result[multiplier][course].consumedStamina = bestResult.consumedStamina;
             result[multiplier][course].naturalRecoveryUnix = naturalRecoveryUnix;
             result[multiplier][course].requiredRecoveryStamina = requiredRecoveryStamina;
-            result[multiplier][course].earnItems = earnItems;
-            result[multiplier][course].tourEarnedPoints = tourEarnedPoints;
+            result[multiplier][course].earnItems = bestResult.earnItems;
+            result[multiplier][course].tourEarnedPoints = bestResult.tourEarnedPoints;
 
-            result[multiplier][course].eventTimes = eventTimesForMission;
-            result[multiplier][course].consumedItems = consumedItems;
-            result[multiplier][course].eventEarnedPoints = eventEarnedPoints;
+            result[multiplier][course].eventTimes = bestResult.eventTimes;
+            result[multiplier][course].consumedItems = bestResult.consumedItems;
+            result[multiplier][course].eventEarnedPoints = bestResult.eventEarnedPoints;
 
-            result[multiplier][course].requiredMinutes = requiredMinutes;
+            result[multiplier][course].requiredMinutes = bestResult.requiredMinutes;
             result[multiplier][course].requiredTime = '';
-            if (Math.floor(requiredMinutes / 60)) {
-                result[multiplier][course].requiredTime += `${Math.floor(requiredMinutes / 60)}時間`;
+            if (Math.floor(bestResult.requiredMinutes / 60)) {
+                result[multiplier][course].requiredTime += `${Math.floor(bestResult.requiredMinutes / 60)}時間`;
             }
-            if (Math.ceil(requiredMinutes % 60)) {
-                result[multiplier][course].requiredTime += `${Math.ceil(requiredMinutes % 60)}分`;
+            if (Math.ceil(bestResult.requiredMinutes % 60)) {
+                result[multiplier][course].requiredTime += `${Math.ceil(bestResult.requiredMinutes % 60)}分`;
             }
             if (!result[multiplier][course].requiredTime) {
                 result[multiplier][course].requiredTime += '0分';
             }
 
             // 消費元気、所要時間の最小値を格納
-            if (minCost.consumedStamina === undefined || minCost.consumedStamina > consumedStamina) {
-                minCost.consumedStamina = consumedStamina;
+            if (minCost.consumedStamina === undefined || minCost.consumedStamina > bestResult.consumedStamina) {
+                minCost.consumedStamina = bestResult.consumedStamina;
             }
-            if (minCost.requiredMinutes === undefined || minCost.requiredMinutes > requiredMinutes) {
-                minCost.requiredMinutes = requiredMinutes;
+            if (minCost.requiredMinutes === undefined || minCost.requiredMinutes > bestResult.requiredMinutes) {
+                minCost.requiredMinutes = bestResult.requiredMinutes;
             }
         });
     }
 
     // 計算結果の表示
     function showResultByCouse(course, formValue, minResult, minCost, maxResult) {
+        const level = course.slice(0, 3);
         if (formValue.showCourse.length && formValue.showCourse.indexOf(course) === -1) {
             // 表示コースでなければ列を非表示
             $(`.${course}`).hide();
-            const level = course.slice(0, 3);
             const colspan = $(`.${level}`).prop('colspan');
             if (colspan > 1) {
                 $(`.${level}`).prop('colspan', colspan - 1);
@@ -410,6 +487,7 @@
             return;
         }
         $(`.${course}`).show();
+        $(`.${level}`).show();
 
         let tourTimesHtml = '';
         Object.keys(minResult[formValue.eventBonusMultiplier][course].tourTimes).forEach((multiplier, i, self) => {
@@ -496,7 +574,7 @@
             minResult[formValue.eventBonusMultiplier][course].eventTimes[3] < maxResult[formValue.eventBonusMultiplier][course].eventTimes[3]
         ) {
             eventTimesHtml += '<br><span class="vertical">～</span><br>';
-            [3, 2, 1]
+            [1, 2, 3]
                 .filter((multiplier) => {
                     return maxResult[formValue.eventBonusMultiplier][course].eventTimes[multiplier];
                 })
@@ -781,7 +859,7 @@
 
         $('#ownItems').val(formValue.ownItems + formValue.inTable.itemsCostMultiplier[course]);
         $('#ownPoints').val(
-            formValue.ownPoints - 144 * formValue.inTable.itemsCostMultiplier[course] * formValue.inTable.eventBonusMultiplier[course]
+            formValue.ownPoints - eventPoints * formValue.inTable.itemsCostMultiplier[course] * formValue.inTable.eventBonusMultiplier[course]
         );
         $('#mission').val(formValue.mission + 1);
         $('#bingo').val(formValue.bingo + 3 * formValue.inTable.itemsCostMultiplier[course]);
@@ -795,9 +873,9 @@
 
         $('#ownItems').val(formValue.ownItems - formValue.inTable.itemsCostMultiplier[course]);
         $('#ownPoints').val(
-            formValue.ownPoints + 144 * formValue.inTable.itemsCostMultiplier[course] * formValue.inTable.eventBonusMultiplier[course]
+            formValue.ownPoints + eventPoints * formValue.inTable.itemsCostMultiplier[course] * formValue.inTable.eventBonusMultiplier[course]
         );
-        if (formValue.remainingProgress <= 0) {
+        if (formValue.inTable.eventBonusMultiplier[course] === 5) {
             $('#remainingProgress').val(40);
         }
         $('#mission').val(formValue.mission - 1);
