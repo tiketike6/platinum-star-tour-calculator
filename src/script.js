@@ -186,11 +186,12 @@
 
     // ログインボーナスを考慮
     function calculateLoginBonus(formValue) {
-        let loginBonus = dayjs.unix(formValue.datetimeEndUnix).endOf('d').diff(dayjs.unix(formValue.nowUnix), 'd') * 2;
+        const loginBonusPerDay = 3;
+        let loginBonus = dayjs.unix(formValue.datetimeEndUnix).endOf('d').diff(dayjs.unix(formValue.nowUnix), 'd') * loginBonusPerDay;
         if (formValue.isFuture) {
-            loginBonus += 2;
+            loginBonus += loginBonusPerDay;
         }
-        $('#loginBonus').text(`+ ログインボーナス ${loginBonus} 個`);
+        $('#loginBonus').text(`+ ログインボーナス ${loginBonus.toLocaleString()} 個`);
         formValue.loginBonus = loginBonus;
     }
 
@@ -202,9 +203,11 @@
         }
 
         const isWork = course.indexOf('work') !== -1;
-        const bingoMultiplier = isWork ? 1 : 2;
+        const tourBingoTimes = isWork ? 1 : 2;
+        const eventBingoTimes = 3;
+        const minMultiplier = 3.5;
 
-        [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
+        [5, 4.5, 4, 3.5].forEach((multiplier) => {
             // ツアー準備回数、イベント楽曲回数を計算
             const results = [];
 
@@ -238,19 +241,21 @@
                     temp.eventEarnedPoints = 0;
 
                     const hasMission = (itemsCostMultiplier) => {
-                        if (missionTimes[itemsCostMultiplier] - temp.eventTimes[itemsCostMultiplier] > 1) return true;
+                        if (itemsCostMultiplier && missionTimes[itemsCostMultiplier] - temp.eventTimes[itemsCostMultiplier] > 1) return true;
                         if (itemsCostMultiplier !== 1 && missionTimes[1] - temp.eventTimes[1] > 0) return true;
                         if (itemsCostMultiplier !== 2 && missionTimes[2] - temp.eventTimes[2] > 0) return true;
                         if (itemsCostMultiplier !== 3 && missionTimes[3] - temp.eventTimes[3] > 0) return true;
                         return false;
                     };
 
+                    const sumEventTimes = () => {
+                        return temp.eventTimes[1] + temp.eventTimes[2] * 2 + temp.eventTimes[3] * 3;
+                    };
+
                     while (
                         hasMission() ||
                         formValue.targetEnd > formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints ||
-                        formValue.bingo >
-                            bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3])
+                        formValue.bingo > tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * sumEventTimes()
                     ) {
                         // ミッション回数が0以下、累積ptが最終目標pt以上、残りビンゴ回数が0以下になるまで繰り返し
                         const itemsCostMultiplierOf5 = (() => {
@@ -272,8 +277,7 @@
                             !hasMission(1) &&
                             formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 5 &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 1)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 1)
                         ) {
                             // pt5.0倍確定、アイテム消費1倍で達成できる場合、イベント楽曲
                             remainingProgress = 40;
@@ -288,8 +292,7 @@
                             !hasMission(2) &&
                             formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 5 * 2 &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 2)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 2)
                         ) {
                             // pt5.0倍確定、アイテム消費2倍で達成できる場合、イベント楽曲
                             remainingProgress = 40;
@@ -305,13 +308,12 @@
                             temp.consumedItems += itemsCostMultiplierOf5;
                             temp.eventEarnedPoints += eventPoints * 5 * itemsCostMultiplierOf5;
                         } else if (
-                            !isItemsCostMultiplier5Only &&
+                            (!isItemsCostMultiplier5Only || multiplier === minMultiplier) &&
                             ownItems &&
                             !hasMission(1) &&
                             formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * multiplier &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 1)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 1)
                         ) {
                             // pt任意倍率、アイテム消費1倍で達成できる場合、イベント楽曲
                             ownItems--;
@@ -319,22 +321,21 @@
                             temp.consumedItems++;
                             temp.eventEarnedPoints += eventPoints * multiplier;
                         } else if (
-                            !isItemsCostMultiplier5Only &&
+                            (!isItemsCostMultiplier5Only || multiplier === minMultiplier) &&
                             ownItems >= 2 &&
                             formValue.itemsCostMultiplier >= 2 &&
                             !hasMission(2) &&
                             formValue.targetEnd <=
                                 formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * multiplier * 2 &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 2)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 2)
                         ) {
                             // pt任意倍率、アイテム消費2倍で達成できる場合、イベント楽曲
                             ownItems -= 2;
                             temp.eventTimes[2]++;
                             temp.consumedItems += 2;
                             temp.eventEarnedPoints += eventPoints * multiplier * 2;
-                        } else if (!isItemsCostMultiplier5Only && ownItems >= itemsCostMultiplierOfNot5) {
+                        } else if ((!isItemsCostMultiplier5Only || multiplier === minMultiplier) && ownItems >= itemsCostMultiplierOfNot5) {
                             // pt任意倍率、アイテムを所持している場合、イベント楽曲
                             ownItems -= itemsCostMultiplierOfNot5;
                             temp.eventTimes[itemsCostMultiplierOfNot5]++;
@@ -343,44 +344,44 @@
                         } else if (
                             ownItems &&
                             !hasMission(1) &&
-                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 3 &&
+                            formValue.targetEnd <=
+                                formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * minMultiplier &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 1)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 1)
                         ) {
-                            // pt3.0倍、アイテム消費1倍で達成できる場合、イベント楽曲
+                            // pt最小倍、アイテム消費1倍で達成できる場合、イベント楽曲
                             ownItems--;
                             temp.eventTimes[1]++;
                             temp.consumedItems++;
-                            temp.eventEarnedPoints += eventPoints * 3;
+                            temp.eventEarnedPoints += eventPoints * minMultiplier;
                         } else if (
                             ownItems >= 2 &&
                             formValue.itemsCostMultiplier >= 2 &&
                             !hasMission(2) &&
-                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 3 * 2 &&
+                            formValue.targetEnd <=
+                                formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * minMultiplier * 2 &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 2)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 2)
                         ) {
-                            // pt3.0倍、アイテム消費2倍で達成できる場合、イベント楽曲
+                            // pt最小倍、アイテム消費2倍で達成できる場合、イベント楽曲
                             ownItems -= 2;
                             temp.eventTimes[2]++;
                             temp.consumedItems += 2;
-                            temp.eventEarnedPoints += eventPoints * 3 * 2;
+                            temp.eventEarnedPoints += eventPoints * minMultiplier * 2;
                         } else if (
                             ownItems >= 3 &&
                             formValue.itemsCostMultiplier >= 3 &&
                             !hasMission(3) &&
-                            formValue.targetEnd <= formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * 3 * 3 &&
+                            formValue.targetEnd <=
+                                formValue.ownPoints + temp.tourEarnedPoints + temp.eventEarnedPoints + eventPoints * minMultiplier * 3 &&
                             formValue.bingo <=
-                                bingoMultiplier * formValue.staminaCostMultiplier * temp.tourTimes +
-                                    3 * (temp.eventTimes[1] + 2 * temp.eventTimes[2] + 3 * temp.eventTimes[3] + 3)
+                                tourBingoTimes * formValue.staminaCostMultiplier * temp.tourTimes + eventBingoTimes * (sumEventTimes() + 3)
                         ) {
-                            // pt3.0倍、アイテム消費3倍で達成できる場合、イベント楽曲
+                            // pt最小倍、アイテム消費3倍で達成できる場合、イベント楽曲
                             ownItems -= 3;
                             temp.eventTimes[3]++;
                             temp.consumedItems += 3;
-                            temp.eventEarnedPoints += eventPoints * 3 * 3;
+                            temp.eventEarnedPoints += eventPoints * minMultiplier * 3;
                         } else {
                             // アイテムを所持していない場合、ツアー準備
                             remainingProgress -= staminaCost[course] / 5;
@@ -490,7 +491,10 @@
         $(`.${level}`).show();
 
         let tourTimesHtml = '';
-        Object.keys(minResult[formValue.eventBonusMultiplier][course].tourTimes).forEach((multiplier, i, self) => {
+        Object.keys(minResult[formValue.eventBonusMultiplier][course].tourTimes).forEach((multiplier) => {
+            if (tourTimesHtml) {
+                tourTimesHtml += '<br>';
+            }
             tourTimesHtml +=
                 `<label for="staminaCostMultiplier${course}-${multiplier}">` +
                 `<input type="radio"` +
@@ -499,44 +503,31 @@
                 ` value="${multiplier}" />` +
                 ` [×${multiplier}] ${minResult[formValue.eventBonusMultiplier][course].tourTimes[multiplier].toLocaleString()}` +
                 `</label>`;
-            if (self[i + 1]) {
-                tourTimesHtml += '<br>';
-            }
         });
         if (
-            minResult[formValue.eventBonusMultiplier][course].tourTimes[1] < maxResult[formValue.eventBonusMultiplier][course].tourTimes[1] ||
-            minResult[formValue.eventBonusMultiplier][course].tourTimes[2] < maxResult[formValue.eventBonusMultiplier][course].tourTimes[2]
+            maxResult[formValue.eventBonusMultiplier][course].tourTimes[1] !== minResult[formValue.eventBonusMultiplier][course].tourTimes[1] ||
+            maxResult[formValue.eventBonusMultiplier][course].tourTimes[2] !== minResult[formValue.eventBonusMultiplier][course].tourTimes[2]
         ) {
-            tourTimesHtml += '<br><span class="vertical">～</span><br>';
+            tourTimesHtml += '<br><span class="vertical">～</span>';
             Object.keys(maxResult[formValue.eventBonusMultiplier][course].tourTimes)
                 .filter((multiplier) => {
                     return maxResult[formValue.eventBonusMultiplier][course].tourTimes[multiplier];
                 })
-                .forEach((multiplier, i, self) => {
+                .forEach((multiplier) => {
+                    tourTimesHtml += '<br>';
                     tourTimesHtml += `[×${multiplier}] ${maxResult[formValue.eventBonusMultiplier][course].tourTimes[multiplier].toLocaleString()}`;
-                    if (self[i + 1]) {
-                        tourTimesHtml += '<br>';
-                    }
                 });
         }
 
-        let recommendMultiplier = formValue.eventBonusMultiplier;
-        [5, 4.5, 4, 3.5, 3].forEach((multiplier) => {
-            if (
-                minResult[multiplier][course].eventTimes[1] === minResult[formValue.eventBonusMultiplier][course].eventTimes[1] &&
-                minResult[multiplier][course].eventTimes[2] === minResult[formValue.eventBonusMultiplier][course].eventTimes[2] &&
-                minResult[multiplier][course].eventTimes[3] === minResult[formValue.eventBonusMultiplier][course].eventTimes[3]
-            ) {
-                recommendMultiplier = multiplier;
-            }
-        });
-
         let recommendMultiplierHtml = '';
-        [3, 3.5, 4, 4.5, 5]
+        [3.5, 4, 4.5, 5]
             .filter((multiplier) => {
-                return multiplier >= recommendMultiplier;
+                return minResult[multiplier][course].consumedStamina <= minResult[formValue.eventBonusMultiplier][course].consumedStamina;
             })
-            .forEach((multiplier, i, self) => {
+            .forEach((multiplier, i) => {
+                if (recommendMultiplierHtml && !(i % 2)) {
+                    recommendMultiplierHtml += '<br>';
+                }
                 recommendMultiplierHtml +=
                     `<label for="eventBonusMultiplier${course}-${multiplier}">` +
                     `<input type="radio"` +
@@ -545,9 +536,6 @@
                     ` value="${multiplier}" />` +
                     ` ×${multiplier.toFixed(1)}` +
                     `</label>`;
-                if (i % 2 && self[i + 1]) {
-                    recommendMultiplierHtml += '<br>';
-                }
             });
 
         let eventTimesHtml = '';
@@ -555,7 +543,10 @@
             .filter((multiplier) => {
                 return multiplier <= formValue.itemsCostMultiplier;
             })
-            .forEach((multiplier, i, self) => {
+            .forEach((multiplier) => {
+                if (eventTimesHtml) {
+                    eventTimesHtml += '<br>';
+                }
                 eventTimesHtml +=
                     `<label for="itemsCostMultiplier${course}-${multiplier}">` +
                     `<input type="radio"` +
@@ -564,25 +555,20 @@
                     ` value="${multiplier}" />` +
                     ` [×${multiplier}] ${minResult[formValue.eventBonusMultiplier][course].eventTimes[multiplier].toLocaleString()}` +
                     `</label>`;
-                if (self[i + 1]) {
-                    eventTimesHtml += '<br>';
-                }
             });
         if (
-            minResult[formValue.eventBonusMultiplier][course].eventTimes[1] < maxResult[formValue.eventBonusMultiplier][course].eventTimes[1] ||
-            minResult[formValue.eventBonusMultiplier][course].eventTimes[2] < maxResult[formValue.eventBonusMultiplier][course].eventTimes[2] ||
-            minResult[formValue.eventBonusMultiplier][course].eventTimes[3] < maxResult[formValue.eventBonusMultiplier][course].eventTimes[3]
+            maxResult[formValue.eventBonusMultiplier][course].eventTimes[1] !== minResult[formValue.eventBonusMultiplier][course].eventTimes[1] ||
+            maxResult[formValue.eventBonusMultiplier][course].eventTimes[2] !== minResult[formValue.eventBonusMultiplier][course].eventTimes[2] ||
+            maxResult[formValue.eventBonusMultiplier][course].eventTimes[3] !== minResult[formValue.eventBonusMultiplier][course].eventTimes[3]
         ) {
-            eventTimesHtml += '<br><span class="vertical">～</span><br>';
+            eventTimesHtml += '<br><span class="vertical">～</span>';
             [1, 2, 3]
                 .filter((multiplier) => {
                     return maxResult[formValue.eventBonusMultiplier][course].eventTimes[multiplier];
                 })
-                .forEach((multiplier, i, self) => {
+                .forEach((multiplier) => {
+                    eventTimesHtml += '<br>';
                     eventTimesHtml += `[×${multiplier}] ${maxResult[formValue.eventBonusMultiplier][course].eventTimes[multiplier].toLocaleString()}`;
-                    if (self[i + 1]) {
-                        eventTimesHtml += '<br>';
-                    }
                 });
         }
 
@@ -594,10 +580,10 @@
                 }&consumedStamina=${minValue}&stamina=${formValue.stamina}">${minValue.toLocaleString()}</a>`;
             }
             if (minValue !== maxValue && !isLink) {
-                text += ` ～<br>${maxValue}`;
+                text += ` ～ ${maxValue}`;
             }
             if (minValue !== maxValue && isLink) {
-                text += ` ～<br><a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}&datetimeEnd=${
+                text += ` ～ <a href="../event-jewels-calculator/index.html?datetimeStart=${formValue.datetimeStart}&datetimeEnd=${
                     formValue.datetimeEnd
                 }&consumedStamina=${maxValue}&stamina=${formValue.stamina}">${maxValue.toLocaleString()}</a>`;
             }
@@ -755,6 +741,39 @@
         });
     }
 
+    function save() {
+        const datetimeSave = dayjs().format('YYYY/M/D H:mm');
+
+        const saveData = {
+            datetimeStart: $('#datetimeStart').val(),
+            datetimeEnd: $('#datetimeEnd').val(),
+            targetEnd: $('#targetEnd').val(),
+            stamina: $('#stamina').val(),
+            ownPoints: $('#ownPoints').val(),
+            ownItems: $('#ownItems').val(),
+            progress: $('#progress').val(),
+            remainingProgress: $('#remainingProgress').val(),
+            mission: $('#mission').val(),
+            bingo: $('#bingo').val(),
+            staminaCostMultiplier: $('[name="staminaCostMultiplier"]:checked').val(),
+            eventBonusMultiplier: $('[name="eventBonusMultiplier"]:checked').val(),
+            itemsCostMultiplier: $('[name="itemsCostMultiplier"]:checked').val(),
+            showCourse: $('[name="showCourse"]:checked')
+                .map((i) => {
+                    return $('[name="showCourse"]:checked').eq(i).val();
+                })
+                .get(),
+            autoSave: $('#autoSave').prop('checked'),
+            datetimeSave: datetimeSave,
+        };
+
+        localStorage.setItem(location.href.replace('index.html', ''), JSON.stringify(saveData));
+
+        $('#datetimeSave').text(datetimeSave);
+        $('#loadSave').prop('disabled', false);
+        $('#clearSave').prop('disabled', false);
+    }
+
     function calculate() {
         const formValue = getFormValue();
         calculateTargetPoint(formValue);
@@ -798,7 +817,7 @@
     $('#update').click(calculate);
 
     // 回数増減ボタン
-    $('.subtractTourTimes').click(function () {
+    $('.beforePlayTour').click(function () {
         // eslint-disable-next-line no-invalid-this
         const course = $(this).val();
         const formValue = getFormValue();
@@ -820,12 +839,12 @@
         $('#remainingProgress').val(formValue.remainingProgress);
 
         const isWork = course.indexOf('work') !== -1;
-        const bingoTimes = isWork ? 1 : 2;
-        $('#bingo').val(formValue.bingo + bingoTimes * formValue.inTable.staminaCostMultiplier[course]);
+        const tourBingoTimes = isWork ? 1 : 2;
+        $('#bingo').val(formValue.bingo + tourBingoTimes * formValue.inTable.staminaCostMultiplier[course]);
 
         calculate();
     });
-    $('.addTourTimes').click(function () {
+    $('.afterPlayTour').click(function () {
         // eslint-disable-next-line no-invalid-this
         const course = $(this).val();
         const formValue = getFormValue();
@@ -847,12 +866,12 @@
         $('#remainingProgress').val(formValue.remainingProgress);
 
         const isWork = course.indexOf('work') !== -1;
-        const bingoTimes = isWork ? 1 : 2;
-        $('#bingo').val(formValue.bingo - bingoTimes * formValue.inTable.staminaCostMultiplier[course]);
+        const tourBingoTimes = isWork ? 1 : 2;
+        $('#bingo').val(formValue.bingo - tourBingoTimes * formValue.inTable.staminaCostMultiplier[course]);
 
         calculate();
     });
-    $('.subtractEventTimes').click(function () {
+    $('.beforePlayEvent').click(function () {
         // eslint-disable-next-line no-invalid-this
         const course = $(this).val();
         const formValue = getFormValue();
@@ -862,11 +881,12 @@
             formValue.ownPoints - eventPoints * formValue.inTable.itemsCostMultiplier[course] * formValue.inTable.eventBonusMultiplier[course]
         );
         $('#mission').val(formValue.mission + 1);
-        $('#bingo').val(formValue.bingo + 3 * formValue.inTable.itemsCostMultiplier[course]);
+        const eventBingoTimes = 3;
+        $('#bingo').val(formValue.bingo + eventBingoTimes * formValue.inTable.itemsCostMultiplier[course]);
 
         calculate();
     });
-    $('.addEventTimes').click(function () {
+    $('.afterPlayEvent').click(function () {
         // eslint-disable-next-line no-invalid-this
         const course = $(this).val();
         const formValue = getFormValue();
@@ -879,44 +899,13 @@
             $('#remainingProgress').val(40);
         }
         $('#mission').val(formValue.mission - 1);
-        $('#bingo').val(formValue.bingo - 3 * formValue.inTable.itemsCostMultiplier[course]);
+        const eventBingoTimes = 3;
+        $('#bingo').val(formValue.bingo - eventBingoTimes * formValue.inTable.itemsCostMultiplier[course]);
 
         calculate();
     });
 
     // 保存ボタン
-    function save() {
-        const datetimeSave = dayjs().format('YYYY/M/D H:mm');
-
-        const saveData = {
-            datetimeStart: $('#datetimeStart').val(),
-            datetimeEnd: $('#datetimeEnd').val(),
-            targetEnd: $('#targetEnd').val(),
-            stamina: $('#stamina').val(),
-            ownPoints: $('#ownPoints').val(),
-            ownItems: $('#ownItems').val(),
-            progress: $('#progress').val(),
-            remainingProgress: $('#remainingProgress').val(),
-            mission: $('#mission').val(),
-            bingo: $('#bingo').val(),
-            staminaCostMultiplier: $('[name="staminaCostMultiplier"]:checked').val(),
-            eventBonusMultiplier: $('[name="eventBonusMultiplier"]:checked').val(),
-            itemsCostMultiplier: $('[name="itemsCostMultiplier"]:checked').val(),
-            showCourse: $('[name="showCourse"]:checked')
-                .map((i) => {
-                    return $('[name="showCourse"]:checked').eq(i).val();
-                })
-                .get(),
-            autoSave: $('#autoSave').prop('checked'),
-            datetimeSave: datetimeSave,
-        };
-
-        localStorage.setItem(location.href.replace('index.html', ''), JSON.stringify(saveData));
-
-        $('#datetimeSave').text(datetimeSave);
-        $('#loadSave').prop('disabled', false);
-        $('#clearSave').prop('disabled', false);
-    }
     $('#save').click(save);
 
     // 入力を初期化ボタン
